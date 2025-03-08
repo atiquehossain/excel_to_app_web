@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Database Generation Results</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Generated Files</h2>
+            
+            <!-- App Info -->
+            <div class="mb-6">
+                <p class="text-gray-700">
+                    <span class="font-medium">App Name:</span> {{ app_name }}
+                </p>
+            </div>
+            
+            <!-- Generated Files List -->
+            <div class="space-y-4">
+                {% for file in generated_files %}
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-medium text-gray-800">{{ file.sheet }}</h3>
+                            <p class="text-sm text-gray-600">Class Name: {{ file.class_name }}</p>
+                        </div>
+                        <span class="text-green-600">✓ Generated</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4">
+            <button onclick="window.history.back()" 
+                    class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                Back
+            </button>
+            <a href="{% url 'excel_converter:preview' %}" 
+               class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 inline-block">
+                Continue to Preview
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

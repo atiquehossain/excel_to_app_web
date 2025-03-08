@@ -1,25 +1,25 @@
-static const String income-lost_ufind_v2 = "income-lost";
-static const String loss_of_livelihood_ufind_v2 = "loss_of_livelihood";
-static const String loss_of_livelihood_type_ufind_v2 = "loss_of_livelihood_type";
-static const String lost_income_6_month_ufind_v2 = "lost_income_6_month";
-static const String natural_disasters_affected_ufind_v2 = "natural_disasters_affected";
-else if (modelName == SetupConstant.income-lost_ufind_v2) {
-  items.add(SetupModel(Languages.getText(context)!.farming_income-lost_ufind_v2, "1"));
+static const String definition_ufind_v2 = "definition";
+static const String family_data_collected_ufind_v2 = "family_data_collected";
+static const String family_submitted_application_ufind_v2 = "family_submitted_application";
+static const String family_with_parents_info_ufind_v2 = "family_with_parents_info";
+static const String more_than_one_family_ufind_v2 = "more_than_one_family";
+else if (modelName == SetupConstant.definition_ufind_v2) {
+  items.add(SetupModel(Languages.getText(context)!.yes_definition_ufind_v2, "1"));
 }
 
-else if (modelName == SetupConstant.loss_of_livelihood_ufind_v2) {
-  items.add(SetupModel(Languages.getText(context)!.yes_loss_of_livelihood_ufind_v2, "1"));
+else if (modelName == SetupConstant.family_data_collected_ufind_v2) {
+  items.add(SetupModel(Languages.getText(context)!.yes_family_data_collected_ufind_v2, "1"));
 }
 
-else if (modelName == SetupConstant.loss_of_livelihood_type_ufind_v2) {
-  items.add(SetupModel(Languages.getText(context)!.agriculture_loss_of_livelihood_type_ufind_v2, "1"));
+else if (modelName == SetupConstant.family_submitted_application_ufind_v2) {
+  items.add(SetupModel(Languages.getText(context)!.yes_family_submitted_application_ufind_v2, "1"));
 }
 
-else if (modelName == SetupConstant.lost_income_6_month_ufind_v2) {
-  items.add(SetupModel(Languages.getText(context)!.yes_lost_income_6_month_ufind_v2, "1"));
+else if (modelName == SetupConstant.family_with_parents_info_ufind_v2) {
+  items.add(SetupModel(Languages.getText(context)!.the_head_of_household_is_widowed_or_family_with_parents_info_ufind_v2, "1"));
 }
 
-else if (modelName == SetupConstant.natural_disasters_affected_ufind_v2) {
-  items.add(SetupModel(Languages.getText(context)!.flood_natural_disasters_affected_ufind_v2, "1"));
+else if (modelName == SetupConstant.more_than_one_family_ufind_v2) {
+  items.add(SetupModel(Languages.getText(context)!.yes_more_than_one_family_ufind_v2, "1"));
 }
 

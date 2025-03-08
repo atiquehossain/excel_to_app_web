@@ -17,4 +17,6 @@ urlpatterns = [
     path('download/<str:filename>/', views.download_file, name='download'),
     path('download-all/', views.download_all_files, name='download_all'),
     path('app-builder/', views.app_builder, name='app_builder'),
+    path('generate-database/', views.generate_database, name='generate_database'),
+    path('generation-results/', views.generation_results, name='generation_results'),
 ] 

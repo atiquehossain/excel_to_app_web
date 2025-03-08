@@ -21,6 +21,7 @@ from .utils import process_excel_file, get_excel_sheets
 from .dart_generator import generate_dart_code
 from django.urls import reverse
 from django.contrib import messages
+import traceback
 
 def index(request):
     """Render the main page."""
@@ -218,106 +219,41 @@ def upload_file(request):
         print(f"Error in upload_file view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
-@require_http_methods(["POST"])
+@require_http_methods(["GET"])
 def preview_code(request):
-    """Preview the generated code without saving."""
-    form = ExcelUploadForm(request.POST, request.FILES)
-    
-    if not form.is_valid():
-        return JsonResponse({'error': form.errors}, status=400)
-    
+    """Preview the generated code."""
     try:
-        # Get form data
-        class_name = form.cleaned_data['class_name']
-        sheets = request.POST.getlist('sheets', [])
-        ideal_sheet = request.POST.get('ideal_sheet', '')
+        # Get generation results from session
+        results = request.session.get('generation_results', {})
+        if not results:
+            messages.error(request, 'No generation results found')
+            return redirect('excel_converter:app_builder')
         
-        # Get column selections
-        database_column = request.POST.get('database_column', '')
-        question_column = request.POST.get('question_column', '')
-        field_name_column = request.POST.get('field_name_column', '')
-        datatype_column = request.POST.get('datatype_column', '')
-        question_serial_column = request.POST.get('question_serial_column', '')
+        app_name = results.get('app_name', '')
+        generated_files = results.get('generated_files', [])
         
-        # Get language support options
-        language_support = request.POST.get('language_support', 'no')
-        question_languages = []
-        field_languages = []
+        # Get sheets from session
+        sheets = request.session.get('selected_sheets', [])
+        ideal_sheet = request.session.get('ideal_sheet', '')
         
-        if language_support == 'yes':
-            try:
-                question_languages = json.loads(request.POST.get('question_languages', '[]'))
-                field_languages = json.loads(request.POST.get('field_languages', '[]'))
-            except json.JSONDecodeError:
-                return JsonResponse({'error': 'Invalid language selection format'}, status=400)
-            
-            if not question_languages or not field_languages:
-                return JsonResponse({'error': 'Please select at least one language for both questions and fields'}, status=400)
+        if not sheets or not ideal_sheet:
+            messages.error(request, 'Session data missing')
+            return redirect('excel_converter:index')
         
-        if not sheets:
-            return JsonResponse({'error': 'No sheets selected'}, status=400)
-        
-        if not ideal_sheet:
-            ideal_sheet = sheets[0]  # Use the first selected sheet as the ideal sheet if not specified
-        
-        # Validate required columns
-        required_columns = {
-            'database_column': database_column,
-            'question_column': question_column,
-            'field_name_column': field_name_column,
-            'datatype_column': datatype_column,
-            'question_serial_column': question_serial_column
+        # Create context for preview template
+        context = {
+            'app_name': app_name,
+            'generated_files': generated_files,
+            'sheets': sheets,
+            'ideal_sheet': ideal_sheet,
+            'preview_code': True  # Flag to indicate preview mode
         }
         
-        missing_columns = [k for k, v in required_columns.items() if not v]
-        if missing_columns:
-            return JsonResponse({'error': f'Missing required columns: {", ".join(missing_columns)}'}, status=400)
+        return render(request, 'excel_converter/preview.html', context)
         
-        # Check if we're using a previously uploaded file
-        filename = request.POST.get('filename', '')
-        if filename:
-            path = f'uploads/{filename}'
-            if not default_storage.exists(path):
-                return JsonResponse({'error': 'File not found'}, status=400)
-        else:
-            # Get the uploaded file
-            excel_file = request.FILES['file']
-            # Save the file
-            path = default_storage.save(f'uploads/{excel_file.name}', ContentFile(excel_file.read()))
-        
-        try:
-            # Process the ideal sheet for preview
-            ideal_df = process_excel_file(path, ideal_sheet)
-            
-            # Add column information to metadata
-            metadata = {
-                'database_column': database_column,
-                'question_column': question_column,
-                'field_name_column': field_name_column,
-                'datatype_column': datatype_column,
-                'question_serial_column': question_serial_column,
-                'ideal_sheet': ideal_sheet,
-                'language_support': language_support,
-                'question_languages': question_languages,
-                'field_languages': field_languages
-            }
-            
-            preview_code = generate_dart_code(ideal_df, class_name, preview=True, metadata=metadata)
-            
-            return JsonResponse({
-                'success': True,
-                'code': preview_code,
-                'message': f'Preview generated for {ideal_sheet}'
-            })
-            
-        finally:
-            # Clean up the uploaded file
-            if default_storage.exists(path):
-                default_storage.delete(path)
-    
     except Exception as e:
-        print(f"Error in preview_code view: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        messages.error(request, f'Error generating preview: {str(e)}')
+        return redirect('excel_converter:app_builder')
 
 def download_file(request, filename):
     """Download the generated Dart file."""
@@ -484,6 +420,8 @@ def validate_row_data(df, required_columns):
 @api_view(['POST'])
 def validate_columns(request):
     try:
+        print("\n=== Validation Data ===")
+        print("Request data:", request.data)
         # Get form data
         filename = request.POST.get('filename')
         sheets = json.loads(request.POST.get('sheets', '[]'))
@@ -616,31 +554,68 @@ def validate_columns(request):
             # Store data in session
             request.session['selected_sheets'] = sheets
             request.session['ideal_sheet'] = ideal_sheet
-        except Exception as session_error:
-            print(f"Warning: Could not store data in session: {session_error}")
+            request.session['filename'] = filename
+            request.session['metadata'] = {
+                'database_column': database_column,
+                'question_column': question_column,
+                'field_name_column': field_name_column,
+                'datatype_column': datatype_column,
+                'question_serial_column': question_serial_column,
+                'ideal_sheet': ideal_sheet,
+                'language_support': language_support,
+                'question_languages': question_languages,
+                'field_languages': field_languages
+            }
+            
+            print("\n=== Storing Metadata ===")
+            print("Field name column:", field_name_column)
+            print("Full metadata:", request.session['metadata'])
+            
+            if not has_column_issues and not has_row_issues:
+                # Store all necessary data in session
+                request.session['selected_sheets'] = sheets
+                request.session['ideal_sheet'] = ideal_sheet
+                request.session['filename'] = filename
+                request.session['metadata'] = {
+                    'database_column': database_column,
+                    'question_column': question_column,
+                    'field_name_column': field_name_column,
+                    'datatype_column': datatype_column,
+                    'question_serial_column': question_serial_column,
+                    'ideal_sheet': ideal_sheet,
+                    'language_support': language_support,
+                    'question_languages': question_languages,
+                    'field_languages': field_languages
+                }
+                
+                # Redirect to app builder
+                return HttpResponseRedirect(reverse('excel_converter:app_builder'))
+            
+            # If there are issues, show validation results
+            context = {
+                'sheets': sheets,
+                'ideal_sheet': ideal_sheet,
+                'database_column': database_column,
+                'question_column': question_column,
+                'field_name_column': field_name_column,
+                'datatype_column': datatype_column,
+                'question_serial_column': question_serial_column,
+                'language_support': language_support,
+                'question_languages': question_languages,
+                'field_languages': field_languages,
+                'validation_result': result,
+                'has_issues': has_column_issues or has_row_issues
+            }
+            
+            return render(request, 'excel_converter/validation_results.html', context)
         
-        if not has_column_issues and not has_row_issues:
-            # If no issues, redirect to app builder
-            return HttpResponseRedirect(reverse('excel_converter:app_builder'))
-        
-        # If there are issues, show validation results
-        context = {
-            'sheets': sheets,
-            'ideal_sheet': ideal_sheet,
-            'database_column': database_column,
-            'question_column': question_column,
-            'field_name_column': field_name_column,
-            'datatype_column': datatype_column,
-            'question_serial_column': question_serial_column,
-            'language_support': language_support,
-            'question_languages': question_languages,
-            'field_languages': field_languages,
-            'validation_result': result,
-            'has_issues': has_column_issues or has_row_issues
-        }
-        
-        return render(request, 'excel_converter/validation_results.html', context)
-        
+        except Exception as e:
+            print(f"Error in validate_columns: {e}")
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
     except Exception as e:
         print(f"Error in validate_columns: {e}")
         return JsonResponse({
@@ -746,4 +721,271 @@ def app_builder(request):
         'sheets': sheets,
         'ideal_sheet': ideal_sheet
     }
-    return render(request, 'excel_converter/app_builder.html', context) 
+    return render(request, 'excel_converter/app_builder.html', context)
+
+@require_http_methods(["POST"])
+def generate_database(request):
+    """Generate database for each sheet with custom class names."""
+    try:
+        # Debug prints for metadata
+        print("\n=== DEBUG METADATA ===")
+        metadata = request.session.get('metadata', {})
+        print("All metadata:", metadata)
+        print("Field name column from metadata:", metadata.get('field_name_column'))
+        print("Available columns in metadata:", list(metadata.keys()))
+        print("=== END DEBUG ===\n")
+
+        # Get form data
+        app_name = request.POST.get('appName')
+        if not app_name:
+            return JsonResponse({'error': 'App name is required'}, status=400)
+        
+        # Get sheets and metadata from session
+        sheets = request.session.get('selected_sheets', [])
+        ideal_sheet = request.session.get('ideal_sheet', '')
+        
+        if not sheets:
+            return JsonResponse({'error': 'No sheets found in session'}, status=400)
+        
+        # Get the Excel file path from session
+        filename = request.session.get('filename')
+        if not filename:
+            return JsonResponse({'error': 'Excel file not found'}, status=400)
+        
+        path = f'uploads/{filename}'
+        if not default_storage.exists(path):
+            return JsonResponse({'error': 'Excel file not found'}, status=400)
+        
+        # Get metadata from session
+        metadata = request.session.get('metadata', {})
+        if not metadata:
+            return JsonResponse({'error': 'Column metadata not found'}, status=400)
+        
+        # Get custom class names for each sheet
+        sheet_classes = {}
+        for sheet in sheets:
+            class_name = request.POST.get(f'sheet_class_{sheet}')
+            if not class_name:
+                return JsonResponse({'error': f'Class name missing for sheet: {sheet}'}, status=400)
+            sheet_classes[sheet] = class_name
+        
+        # Process each sheet
+        generated_files = []
+        for sheet in sheets:
+            df = process_excel_file(path, sheet)
+            
+            print(f"\n=== Processing Sheet: {sheet} ===")
+            print("DataFrame columns:", df.columns.tolist())
+            
+            # Get questions and fields
+            questions = []
+            fields = []
+            
+            # Get column names from metadata
+            question_col = metadata.get('question_column', '')
+            field_name_col = metadata.get('field_name_column', '')
+            
+            print(f"Looking for question column: '{question_col}'")
+            print(f"Looking for field name column: '{field_name_col}'")
+            
+            # Try different variations of column names
+            question_variations = [
+                question_col,
+                'Questions in English',
+                'questions_in_english',
+                'Questions',
+                'Question'
+            ]
+            
+            field_variations = [
+                field_name_col,
+                'Field Names in English',
+                'field_names_in_english',
+                'Field Names',
+                'Fields',
+                'Labels in English',  # Add common variations
+                'labels_in_english',
+                'Label',
+                'Labels',
+                'Field Label',
+                'Field Labels'
+            ]
+            
+            # Find question column
+            actual_question_col = None
+            for possible_col in question_variations:
+                for col in df.columns:
+                    if col.lower().strip() == possible_col.lower().strip():
+                        actual_question_col = col
+                        print(f"Found matching question column: '{col}'")
+                        break
+                if actual_question_col:
+                    break
+            
+            # Find field name column
+            actual_field_col = None
+            for possible_col in field_variations:
+                if possible_col:  # Only check if possible_col is not empty
+                    print(f"Checking for field column: '{possible_col}'")
+                    for col in df.columns:
+                        print(f"  Comparing with: '{col}'")
+                        if col.lower().strip() == possible_col.lower().strip():
+                            actual_field_col = col
+                            print(f"Found matching field column: '{col}'")
+                            break
+                if actual_field_col:
+                    break
+            
+            if not actual_field_col:
+                print("Available columns for field names:")
+                for col in df.columns:
+                    print(f"  - {col}")
+            
+            # Process questions
+            if actual_question_col:
+                print(f"Processing questions from column: '{actual_question_col}'")
+                database_col = metadata.get('database_column', '').lower().strip()
+                
+                for _, row in df.iterrows():
+                    question = row[actual_question_col]
+                    database_value = row.get(database_col, '')  # Get the database value for this row
+                    
+                    if pd.notna(question) and str(question).strip():
+                        question_text = str(question).strip()
+                        
+                        # If we have a database value, use it as prefix for the key
+                        if pd.notna(database_value) and str(database_value).strip():
+                            # Convert database value to key format
+                            db_key = str(database_value).strip().lower()
+                            db_key = re.sub(r'[^a-z0-9]+', '_', db_key)
+                            db_key = re.sub(r'_+', '_', db_key)
+                            db_key = db_key.strip('_')
+                            
+                            # Add model name as suffix
+                            model_name = sheet_classes[sheet].lower()
+                            key = f"{db_key}_{model_name}"
+                        else:
+                            # If no database value, use the question text
+                            key = question_text.lower()
+                            key = re.sub(r'[^a-z0-9]+', '_', key)
+                            key = re.sub(r'_+', '_', key)
+                            key = key.strip('_')
+                            # Add model name as suffix
+                            model_name = sheet_classes[sheet].lower()
+                            key = f"{key}_{model_name}"
+                        
+                        if not any(q['key'] == key for q in questions):
+                            questions.append({
+                                'question': question_text,
+                                'key': key
+                            })
+                            print(f"Added question: '{question_text}' with key: '{key}'")
+            
+            # Process field names
+            if actual_field_col:
+                print(f"Processing fields from column: '{actual_field_col}'")
+                database_col = metadata.get('database_column', '').lower().strip()
+                
+                # Keep track of the current database context
+                current_database_value = None
+                
+                for _, row in df.iterrows():
+                    field = row[actual_field_col]
+                    database_value = row.get(database_col, '')
+                    
+                    # Update current database context if we have a new database value
+                    if pd.notna(database_value) and str(database_value).strip():
+                        current_database_value = str(database_value).strip()
+                        print(f"Updated database context to: {current_database_value}")
+                    
+                    if pd.notna(field) and str(field).strip():
+                        field_text = str(field).strip()
+                        
+                        # Convert field value to key format
+                        field_key = sanitize_key(field_text)
+                        
+                        # Generate key based on context
+                        if current_database_value:
+                            # Convert database value to key format
+                            db_key = sanitize_key(current_database_value)
+                            
+                            # Combine: fieldkey_databasevalue (e.g., farming_income_lost)
+                            key = f"{field_key}_{db_key}"
+                            
+                            print(f"Generated key with database context: {key}")
+                        else:
+                            # No database context, use simple format
+                            key = field_key
+                            print(f"Generated key without database context: {key}")
+                        
+                        # Don't add model name to the key
+                        if not any(f['key'] == key for f in fields):
+                            fields.append({
+                                'field': field_text,
+                                'key': key,
+                                'database_value': current_database_value
+                            })
+                            print(f"Added field: '{field_text}' with key: '{key}' (database: {current_database_value})")
+            
+            # Generate code for the sheet
+            code = generate_dart_code(df, sheet_classes[sheet], preview=True, metadata=metadata)
+            
+            generated_files.append({
+                'sheet': sheet,
+                'class_name': sheet_classes[sheet],
+                'status': 'success',
+                'generated_code': code,
+                'questions': questions,
+                'fields': fields
+            })
+        
+        # Print final results
+        print("\nFinal Results:")
+        for file in generated_files:
+            print(f"\nSheet: {file['sheet']}")
+            print(f"Questions found: {len(file['questions'])}")
+            print(f"Fields found: {len(file['fields'])}")
+            
+        # Store results in session
+        request.session['generation_results'] = {
+            'app_name': app_name,
+            'generated_files': generated_files
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'redirect_url': reverse('excel_converter:generation_results')
+        })
+        
+    except Exception as e:
+        print(f"Error in generate_database: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+def generation_results(request):
+    """Show the results of database generation."""
+    # Get results from session
+    results = request.session.get('generation_results', {})
+    if not results:
+        messages.error(request, 'No generation results found')
+        return redirect('excel_converter:app_builder')
+    
+    context = {
+        'app_name': results.get('app_name', ''),
+        'generated_files': results.get('generated_files', [])
+    }
+    return render(request, 'excel_converter/generation_results.html', context)
+
+def sanitize_key(name):
+    """Sanitize keys to ensure they are valid Dart identifiers."""
+    # Convert to lowercase and strip whitespace
+    key = str(name).strip().lower()
+    # Replace non-alphanumeric characters with underscore
+    key = re.sub(r'[^0-9a-zA-Z]+', '_', key)
+    # Remove multiple underscores
+    key = re.sub(r'_+', '_', key)
+    # Remove leading/trailing underscores
+    return key.strip('_') 

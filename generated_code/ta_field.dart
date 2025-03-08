@@ -1,9 +1,9 @@
-/// GeneratedClass localization file - 2025-03-08
+/// Householdinformation localization file - 2025-03-08
 
 class Localization {
-  String get flood_natural_disasters_affected_ufind_v2 => 'வெள்ளம்';
-  String get yes_lost_income_6_month_ufind_v2 => 'ஆமாம்';
-  String get farming_income_lost_ufind_v2 => 'விவசாயம்';
-  String get yes_loss_of_livelihood_ufind_v2 => 'ஆமாம்';
-  String get agriculture_loss_of_livelihood_type_ufind_v2 => 'விவசாயம்';
+  String get yes_definition_ufind_v2 => 'ஆம்';
+  String get yes_more_than_one_family_ufind_v2 => 'ஆம்';
+  String get yes_family_submitted_application_ufind_v2 => 'ஆம்';
+  String get yes_family_data_collected_ufind_v2 => 'ஆம்';
+  String get the_head_of_household_is_widowed_or_family_with_parents_info_ufind_v2 => 'குடும்பத் தலைவர் விதவை, அல்லது';
 }

@@ -28,46 +28,92 @@ def write_dart_file(file_path, content, output_folder=None):
 
 def generate_dart_code(df, class_name, preview=False, metadata=None):
     """Generate Dart code from DataFrame."""
-    # Create output directory if it doesn't exist
-    output_folder = settings.DART_SETTINGS['output_folder']
-    os.makedirs(output_folder, exist_ok=True)
-    
-    # Extract metadata
-    question_serial_column = None
-    ideal_sheet = None
-    if metadata:
-        question_serial_column = metadata.get('question_serial_column')
-        ideal_sheet = metadata.get('ideal_sheet')
-    
-    # Process the data for localization and UI generation
     try:
-        # Convert all columns to string and fill NaN values
-        for col in df.columns:
-            df[col] = df[col].fillna('').astype(str)
-        
-        # Check for required columns
-        required_columns = ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala', 'data_type', 'database']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        
-        if missing_columns:
-            # Try alternative columns for standard model generation
-            alt_required_columns = ['questions_in_english', 'labels_in_english', 'data_type', 'database']
-            alt_missing_columns = [col for col in alt_required_columns if col not in df.columns]
+        if metadata is None:
+            raise ValueError("Metadata is required")
             
-            if alt_missing_columns:
-                # Fall back to simple model generation
-                return generate_simple_model(df, class_name, preview, output_folder, question_serial_column)
-            else:
-                # Generate standard model
-                return generate_standard_model(df, class_name, preview, output_folder, question_serial_column)
-        else:
-            # Generate full model with localization
-            return generate_full_model(df, class_name, preview, output_folder, question_serial_column)
-    
+        # Get column names from metadata
+        database_column = metadata.get('database_column')
+        if not database_column:
+            raise ValueError("Database column name is required")
+        
+        print(f"Database column: {database_column}")  # Debug print
+        print(f"Available columns: {df.columns.tolist()}")  # Debug print
+        
+        # Normalize column names in DataFrame
+        df.columns = [col.strip().lower() for col in df.columns]
+        database_column = database_column.strip().lower()
+        
+        if database_column not in df.columns:
+            raise ValueError(f"Database column '{database_column}' not found in DataFrame. Available columns: {df.columns.tolist()}")
+        
+        # Get unique database values (these will be our class properties)
+        database_values = df[database_column].unique()
+        
+        # Filter out any empty or NaN values and clean the values
+        database_values = [str(val).strip() for val in database_values if pd.notna(val) and str(val).strip()]
+        
+        # Generate the Dart class code
+        code = [f"class {class_name} {{"]
+        
+        # Add primary ID field first
+        code.append(f"  String {class_name.lower()}Id;")
+        code.append("")  # Add a blank line for readability
+        
+        # Add other class properties
+        for db_value in database_values:
+            var_name = db_value.lower().replace(' ', '_').replace('-', '_')
+            code.append(f"  String {var_name};")
+        
+        # Add constructor with primary ID
+        code.append(f"\n  {class_name}({{")
+        code.append(f"    required this.{class_name.lower()}Id,")  # Primary ID first
+        for db_value in database_values:
+            var_name = db_value.lower().replace(' ', '_').replace('-', '_')
+            code.append(f"    required this.{var_name},")
+        code.append("  });")
+        
+        # Add fromJson factory with primary ID
+        code.append(f"\n  factory {class_name}.fromJson(Map<String, dynamic> json) {{")
+        code.append(f"    return {class_name}(")
+        code.append(f"      {class_name.lower()}Id: json['{class_name.lower()}Id'] ?? '',")  # Primary ID first
+        for db_value in database_values:
+            var_name = db_value.lower().replace(' ', '_').replace('-', '_')
+            code.append(f"      {var_name}: json['{db_value}'] ?? '',")
+        code.append("    );")
+        code.append("  }")
+        
+        # Add toJson method with primary ID
+        code.append("\n  Map<String, dynamic> toJson() {")
+        code.append("    return {")
+        code.append(f"      '{class_name.lower()}Id': {class_name.lower()}Id,")  # Primary ID first
+        for db_value in database_values:
+            var_name = db_value.lower().replace(' ', '_').replace('-', '_')
+            code.append(f"      '{db_value}': {var_name},")
+        code.append("    };")
+        code.append("  }")
+        
+        code.append("}")
+        
+        generated_code = '\n'.join(code)
+        
+        if preview:
+            return generated_code
+            
+        # Save to file if not in preview mode
+        output_dir = settings.DART_SETTINGS['output_folder']
+        os.makedirs(output_dir, exist_ok=True)
+        
+        output_file = os.path.join(output_dir, f"{class_name.lower()}.dart")
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(generated_code)
+            
+        return output_file
+        
     except Exception as e:
         print(f"Error generating Dart code: {e}")
-        # Fall back to simple model generation
-        return generate_simple_model(df, class_name, preview, output_folder, question_serial_column)
+        print(f"DataFrame columns: {df.columns.tolist()}")  # Debug print
+        raise
 
 def generate_full_model(df, class_name, preview=False, output_folder=None, question_serial_column=None):
     """Generate full model with localization and UI."""

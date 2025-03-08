@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Code Preview</h1>
+        
+        <!-- App Info -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Generated App Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="font-medium">App Name:</p>
+                    <p class="text-gray-700">{{ app_name }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Ideal Sheet:</p>
+                    <p class="text-gray-700">{{ ideal_sheet }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button 
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 bg-gray-100 border-b-2 border-blue-500"
+                        onclick="showPreviewTab('models')"
+                        id="models-tab"
+                    >
+                        Models
+                    </button>
+                    <button 
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
+                        onclick="showPreviewTab('language-keys')"
+                        id="language-keys-tab"
+                    >
+                        Language Keys
+                    </button>
+                </nav>
+            </div>
+            
+            <!-- Models Tab Content -->
+            <div id="models-content" class="tab-content">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Generated Models</h2>
+                </div>
+                
+                <!-- Model Files Navigation -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex space-x-4" aria-label="Model Tabs">
+                        {% for file in generated_files %}
+                        <button 
+                            class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
+                                   {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
+                            onclick="showModelTab('{{ file.class_name }}')"
+                        >
+                            {{ file.sheet }}
+                        </button>
+                        {% endfor %}
+                    </nav>
+                </div>
+                
+                <!-- Model Code Content -->
+                {% for file in generated_files %}
+                <div id="model-{{ file.class_name }}" 
+                     class="model-content {% if not forloop.first %}hidden{% endif %}">
+                    <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                        <pre class="text-white"><code>{{ file.generated_code|default:"// Code will be generated here" }}</code></pre>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Language Keys Tab Content -->
+            <div id="language-keys-content" class="tab-content hidden">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Language Keys</h2>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <pre class="text-white"><code>abstract class Languages {
+{% for file in generated_files %}
+  // {{ file.sheet }} Questions
+  {% if file.questions %}
+    {% for question in file.questions %}
+  String get {{ question.key }};  // {{ question.question }}
+    {% endfor %}
+  {% endif %}
+
+  // {{ file.sheet }} Fields
+  {% if file.fields %}
+    {% for field in file.fields %}
+  String get {{ field.key }};  // {{ field.field }}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4">
+            <button onclick="window.history.back()" 
+                    class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                Back
+            </button>
+            <button onclick="downloadAll()" 
+                    class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                Download All Files
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPreviewTab(tabName) {
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Show selected tab content
+    document.getElementById(`${tabName}-content`).classList.remove('hidden');
+    
+    // Update tab button styles
+    document.querySelectorAll('nav button').forEach(button => {
+        button.classList.remove('bg-gray-100', 'border-b-2', 'border-blue-500');
+    });
+    document.getElementById(`${tabName}-tab`).classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
+}
+
+function showModelTab(className) {
+    // Hide all model content
+    document.querySelectorAll('.model-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Show selected model content
+    document.getElementById(`model-${className}`).classList.remove('hidden');
+    
+    // Update model tab button styles
+    document.querySelectorAll('nav[aria-label="Model Tabs"] button').forEach(button => {
+        button.classList.remove('bg-gray-100', 'border-b-2', 'border-blue-500');
+    });
+    event.currentTarget.classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
+}
+
+function downloadAll() {
+    const files = {{ generated_files|safe }};
+    const fileNames = files.map(f => f.class_name + '.dart');
+    const url = `{% url 'excel_converter:download_all' %}?files=${encodeURIComponent(JSON.stringify(fileNames))}`;
+    window.location.href = url;
+}
+</script>
+{% endblock %} 
