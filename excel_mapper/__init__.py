@@ -1,0 +1,3 @@
+"""
+Excel mapper project initialization.
+""" 

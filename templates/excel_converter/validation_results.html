@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Validation Results</h1>
+        <button onclick="window.history.back()" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+            Back to Form
+        </button>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Sheet Selection -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Selected Sheets</h2>
+            <div class="text-gray-700">{{ sheets|join:", " }}</div>
+            <div class="mt-2">
+                <span class="font-medium">Ideal Sheet: </span>
+                <span class="text-gray-700">{{ ideal_sheet }}</span>
+            </div>
+        </div>
+
+        <!-- Column Selections -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Selected Columns</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="font-medium">Database Column:</p>
+                    <p class="text-gray-700">{{ database_column }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Question Column:</p>
+                    <p class="text-gray-700">{{ question_column }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Field Name Column:</p>
+                    <p class="text-gray-700">{{ field_name_column }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Datatype Column:</p>
+                    <p class="text-gray-700">{{ datatype_column }}</p>
+                </div>
+                <div>
+                    <p class="font-medium">Question Serial Column:</p>
+                    <p class="text-gray-700">{{ question_serial_column }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Language Support -->
+        {% if language_support == 'yes' %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Language Support</h2>
+            <div class="space-y-4">
+                <div>
+                    <p class="font-medium">Selected Question Columns:</p>
+                    <ul class="list-disc list-inside text-gray-700">
+                        {% for lang in question_languages %}
+                        <li>{{ lang }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <p class="font-medium">Selected Field Columns:</p>
+                    <ul class="list-disc list-inside text-gray-700">
+                        {% for lang in field_languages %}
+                        <li>{{ lang }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Validation Results -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Validation Results</h2>
+            {% if not has_issues %}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                <p class="font-bold">✅ Success!</p>
+                <p>All selected columns are available in all selected sheets.</p>
+            </div>
+            {% else %}
+            <div class="space-y-4">
+                {% for sheet, result in validation_result.items %}
+                {% if result.missing %}
+                <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                    <p class="font-bold">Sheet: {{ sheet }}</p>
+                    <p class="font-medium mt-2">Missing Columns:</p>
+                    <ul class="list-disc list-inside">
+                        {% for col in result.missing %}
+                        <li>{{ col }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if result.available %}
+                    <p class="font-medium mt-2">Available Columns:</p>
+                    <ul class="list-disc list-inside text-sm">
+                        {% for col in result.available %}
+                        <li>{{ col }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4">
+            <button onclick="window.history.back()" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                Back to Form
+            </button>
+            {% if not has_issues %}
+            <button onclick="window.location.href='{% url 'excel_converter:preview' %}'" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                Continue to Preview
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

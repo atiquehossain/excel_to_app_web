@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-gray-800 mb-4">Excel to Dart Code Generator</h1>
+    <p class="text-gray-600">Convert your Excel spreadsheet data into Dart/Flutter code</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Upload Form -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-semibold mb-4">Upload Excel File</h2>
+        <form id="uploadForm" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Step 1: File Upload -->
+            <div id="fileUploadSection">
+                {{ form.file|as_crispy_field }}
+                <button type="button" id="getSheets" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2">
+                    Get Sheets
+                </button>
+            </div>
+            
+            <!-- Step 2: Sheet Selection -->
+            <div id="sheetSelectionSection" class="hidden">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2 font-semibold">Select Sheets to Process</label>
+                    <div id="sheetCheckboxes" class="max-h-40 overflow-y-auto border rounded-lg p-3">
+                        <!-- Sheet checkboxes will be added dynamically -->
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2 font-semibold" for="ideal_sheet">Select Ideal Sheet</label>
+                    <select id="ideal_sheet" name="ideal_sheet" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Select an ideal sheet --</option>
+                        <!-- Ideal sheet options will be added dynamically based on selected sheets -->
+                    </select>
+                </div>
+                <button type="button" id="getColumnsBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 hidden">
+                    Get Columns
+                </button>
+                <button type="button" id="backBtn" class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2">
+                    Back to File Upload
+                </button>
+            </div>
+            
+            <!-- Step 3: Column Selection -->
+            <div id="columnSelectionSection" class="hidden">
+                <div class="space-y-4">
+                    <!-- Database Column Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold" for="database_column">Select Database Column</label>
+                        <select id="database_column" name="database_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select a column --</option>
+                        </select>
+                    </div>
+
+                    <!-- English Question Column Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold" for="question_column">Select English Question Column</label>
+                        <select id="question_column" name="question_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select a column --</option>
+                        </select>
+                    </div>
+
+                    <!-- Field Name Column Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold" for="field_name_column">Select Field Name Column</label>
+                        <select id="field_name_column" name="field_name_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select a column --</option>
+                        </select>
+                    </div>
+
+                    <!-- Datatype Column Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold" for="datatype_column">Select Datatype Column</label>
+                        <select id="datatype_column" name="datatype_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select a column --</option>
+                        </select>
+                    </div>
+
+                    <!-- Question Serial Column Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold" for="question_serial_column">Select Question Serial Column</label>
+                        <select id="question_serial_column" name="question_serial_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Select a column --</option>
+                        </select>
+                    </div>
+
+                    <!-- Language Support Selection -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 font-semibold">Does project support multiple languages?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="language_support" value="yes" class="form-radio text-blue-500">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="language_support" value="no" class="form-radio text-blue-500" checked>
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Language Selection Sections (initially hidden) -->
+                    <div id="languageSelectionSection" class="hidden space-y-4">
+                        <!-- Question Languages Selection -->
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2 font-semibold">Select Question Columns</label>
+                            <div id="questionLanguagesCheckboxes" class="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2">
+                                <!-- Checkboxes will be added here dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Field Languages Selection -->
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2 font-semibold">Select Field Columns</label>
+                            <div id="fieldLanguagesCheckboxes" class="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2">
+                                <!-- Checkboxes will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="filename" name="filename" value="">
+                    <div class="flex space-x-4">
+                        <button type="button" id="checkBtn"
+                                class="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            Check Selections
+                        </button>
+                        <button type="button" id="previewBtn"
+                                class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            Preview Selections
+                        </button>
+                        <button type="submit" id="generateBtn"
+                                class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Generate Code
+                        </button>
+                    </div>
+                    <button type="button" id="backToSheetsBtn" class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2">
+                        Back to Sheet Selection
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Generated Code -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold">Generated Code</h2>
+            <button id="downloadBtn" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 hidden">
+                Download
+            </button>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-4">
+            <pre><code class="language-dart" id="codeOutput">// Generated code will appear here...</code></pre>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p class="mt-4 text-gray-700">Processing your file...</p>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold">Selected Options Preview</h2>
+            <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <!-- Sheet Selection -->
+            <div class="border-b pb-4">
+                <h3 class="text-lg font-semibold mb-2">Selected Sheets</h3>
+                <div id="previewSheets" class="text-gray-700"></div>
+                <div class="mt-2">
+                    <span class="font-medium">Ideal Sheet: </span>
+                    <span id="previewIdealSheet" class="text-gray-700"></span>
+                </div>
+            </div>
+
+            <!-- Column Selections -->
+            <div class="border-b pb-4">
+                <h3 class="text-lg font-semibold mb-2">Selected Columns</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-medium">Database Column:</p>
+                        <p id="previewDatabaseColumn" class="text-gray-700"></p>
+                    </div>
+                    <div>
+                        <p class="font-medium">Question Column:</p>
+                        <p id="previewQuestionColumn" class="text-gray-700"></p>
+                    </div>
+                    <div>
+                        <p class="font-medium">Field Name Column:</p>
+                        <p id="previewFieldNameColumn" class="text-gray-700"></p>
+                    </div>
+                    <div>
+                        <p class="font-medium">Datatype Column:</p>
+                        <p id="previewDatatypeColumn" class="text-gray-700"></p>
+                    </div>
+                    <div>
+                        <p class="font-medium">Question Serial Column:</p>
+                        <p id="previewQuestionSerialColumn" class="text-gray-700"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Support -->
+            <div id="previewLanguageSection" class="border-b pb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Language Support</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="font-medium">Selected Question Columns:</p>
+                        <ul id="previewQuestionLanguages" class="list-disc list-inside text-gray-700"></ul>
+                    </div>
+                    <div>
+                        <p class="font-medium">Selected Field Columns:</p>
+                        <ul id="previewFieldLanguages" class="list-disc list-inside text-gray-700"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Results -->
+            <div id="validationResultsSection" class="border-b pb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Validation Results</h3>
+                <div id="validationResults" class="space-y-4">
+                    <!-- Results will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('uploadForm');
+        const previewBtn = document.getElementById('previewBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const codeOutput = document.getElementById('codeOutput');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Step 1: File Upload
+        const getSheets = document.getElementById('getSheets');
+        const fileUploadSection = document.getElementById('fileUploadSection');
+        
+        // Step 2: Sheet Selection
+        const sheetSelectionSection = document.getElementById('sheetSelectionSection');
+        const sheetCheckboxes = document.getElementById('sheetCheckboxes');
+        const idealSheet = document.getElementById('ideal_sheet');
+        const getColumnsBtn = document.getElementById('getColumnsBtn');
+        const backBtn = document.getElementById('backBtn');
+        
+        // Step 3: Column Selection
+        const columnSelectionSection = document.getElementById('columnSelectionSection');
+        const availableColumns = document.getElementById('availableColumns');
+        const questionSerialColumn = document.getElementById('question_serial_column');
+        const backToSheetsBtn = document.getElementById('backToSheetsBtn');
+        
+        const filenameInput = document.getElementById('filename');
+        
+        // Store generated files
+        let generatedFiles = [];
+        // Store available columns
+        let columns = [];
+
+        console.log("DOM loaded, elements initialized");
+
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+            console.log("Loading overlay shown");
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+            console.log("Loading overlay hidden");
+        }
+
+        function handleResponse(response) {
+            console.log("Handling response:", response);
+            if (response.success) {
+                codeOutput.textContent = response.code;
+                downloadBtn.classList.remove('hidden');
+                Prism.highlightElement(codeOutput);
+                
+                // Store generated files if available
+                if (response.files) {
+                    generatedFiles = response.files;
+                    console.log("Generated files:", generatedFiles);
+                    
+                    // Update download button text if multiple files
+                    if (generatedFiles.length > 1) {
+                        downloadBtn.textContent = `Download All (${generatedFiles.length} files)`;
+                    } else {
+                        downloadBtn.textContent = 'Download';
+                    }
+                }
+            } else {
+                alert(response.error || 'An error occurred');
+            }
+        }
+
+        function getSelectedSheets() {
+            const checkboxes = document.querySelectorAll('#sheetCheckboxes input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        function updateIdealSheetDropdown() {
+            // Clear existing options except the default one
+            while (idealSheet.options.length > 1) {
+                idealSheet.remove(1);
+            }
+            
+            // Get selected sheets
+            const selectedSheets = getSelectedSheets();
+            
+            // Add selected sheets to ideal sheet dropdown
+            selectedSheets.forEach(sheet => {
+                const option = document.createElement('option');
+                option.value = sheet;
+                option.textContent = sheet;
+                idealSheet.appendChild(option);
+            });
+            
+            // Show/hide get columns button based on selection
+            if (selectedSheets.length > 0) {
+                getColumnsBtn.classList.remove('hidden');
+            } else {
+                getColumnsBtn.classList.add('hidden');
+            }
+        }
+
+        async function handleSubmit(isPreview = false) {
+            const formData = new FormData(form);
+            const endpoint = isPreview ? '{% url "excel_converter:preview" %}' : '{% url "excel_converter:upload" %}';
+            
+            // Get selected sheets
+            const selectedSheets = getSelectedSheets();
+            if (selectedSheets.length === 0) {
+                alert('Please select at least one sheet');
+                return;
+            }
+            
+            // Check if ideal sheet is selected
+            const idealSheetValue = idealSheet.value;
+            if (!idealSheetValue) {
+                alert('Please select an ideal sheet');
+                return;
+            }
+            
+            // Check if all required columns are selected
+            const requiredColumns = ['database_column', 'question_column', 'field_name_column', 'datatype_column', 'question_serial_column'];
+            const missingColumns = requiredColumns.filter(col => !document.getElementById(col).value);
+            
+            if (missingColumns.length > 0) {
+                alert(`Please select all required columns: ${missingColumns.join(', ')}`);
+                return;
+            }
+            
+            // Add selected sheets to form data
+            formData.delete('sheets');
+            selectedSheets.forEach(sheet => {
+                formData.append('sheets', sheet);
+            });
+            
+            // Add all column selections to form data
+            formData.append('ideal_sheet', idealSheetValue);
+            requiredColumns.forEach(col => {
+                formData.append(col, document.getElementById(col).value);
+            });
+            
+            // Add language support and selections
+            const languageSupport = document.querySelector('input[name="language_support"]:checked').value;
+            formData.append('language_support', languageSupport);
+            
+            if (languageSupport === 'yes') {
+                const questionLanguagesSelected = Array.from(
+                    document.querySelectorAll('input[name="question_languages[]"]:checked')
+                ).map(cb => cb.value);
+                
+                const fieldLanguagesSelected = Array.from(
+                    document.querySelectorAll('input[name="field_languages[]"]:checked')
+                ).map(cb => cb.value);
+                
+                if (questionLanguagesSelected.length === 0 || fieldLanguagesSelected.length === 0) {
+                    alert('Please select at least one column for both questions and fields');
+                    return;
+                }
+                
+                formData.append('question_languages', JSON.stringify(questionLanguagesSelected));
+                formData.append('field_languages', JSON.stringify(fieldLanguagesSelected));
+            }
+            
+            console.log("Submitting form to:", endpoint);
+            console.log("Selected sheets:", selectedSheets);
+            console.log("Ideal sheet:", idealSheetValue);
+            console.log("Selected columns:", Object.fromEntries(formData));
+
+            showLoading();
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                const data = await response.json();
+                handleResponse(data);
+            } catch (error) {
+                console.error("Error submitting form:", error);
+                alert('An error occurred while processing your request');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Step 1: Get Sheets
+        getSheets.addEventListener('click', async function() {
+            console.log("Get Sheets button clicked");
+            const fileInput = document.getElementById('id_file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a file first');
+                return;
+            }
+
+            console.log("File selected:", fileInput.files[0].name);
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            try {
+                console.log("Fetching sheets from server...");
+                const response = await fetch('{% url "excel_converter:get_sheets" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                console.log("Response received:", response.status);
+                const data = await response.json();
+                console.log("Sheet data:", data);
+                
+                if (data.success) {
+                    // Clear existing checkboxes
+                    sheetCheckboxes.innerHTML = '';
+                    
+                    // Add sheet checkboxes
+                    console.log(`Adding ${data.sheets.length} sheets to checkboxes`);
+                    data.sheets.forEach(sheet => {
+                        const checkboxDiv = document.createElement('div');
+                        checkboxDiv.className = 'flex items-center mb-2';
+                        
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `sheet_${sheet.replace(/\s+/g, '_')}`;
+                        checkbox.value = sheet;
+                        checkbox.className = 'mr-2';
+                        
+                        // Add event listener to update ideal sheet dropdown when checkbox is clicked
+                        checkbox.addEventListener('change', updateIdealSheetDropdown);
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = checkbox.id;
+                        label.textContent = sheet;
+                        label.className = 'text-gray-700';
+                        
+                        checkboxDiv.appendChild(checkbox);
+                        checkboxDiv.appendChild(label);
+                        sheetCheckboxes.appendChild(checkboxDiv);
+                        
+                        console.log(`Added sheet checkbox: ${sheet}`);
+                    });
+                    
+                    // Set filename
+                    filenameInput.value = data.filename;
+                    console.log("Filename set:", data.filename);
+                    
+                    // Show sheet selection section
+                    fileUploadSection.classList.add('hidden');
+                    sheetSelectionSection.classList.remove('hidden');
+                    console.log("Sheet selection section shown");
+                } else {
+                    console.error("Error from server:", data.error);
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error("Error fetching sheets:", error);
+                alert('An error occurred while processing your request');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Step 2: Get Columns
+        getColumnsBtn.addEventListener('click', async function() {
+            console.log("Get Columns button clicked");
+            
+            const idealSheetValue = idealSheet.value;
+            if (!idealSheetValue) {
+                alert('Please select an ideal sheet');
+                return;
+            }
+            
+            showLoading();
+            
+            const formData = new FormData();
+            formData.append('filename', filenameInput.value);
+            formData.append('sheet_name', idealSheetValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            try {
+                console.log("Fetching columns from server...");
+                const response = await fetch('{% url "excel_converter:get_columns" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                console.log("Response received:", response.status);
+                const data = await response.json();
+                console.log("Column data:", data);
+                
+                if (data.success) {
+                    // Store columns
+                    columns = data.columns;
+                    
+                    // Initialize dropdowns
+                    const dropdowns = {
+                        database_column: document.getElementById('database_column'),
+                        question_column: document.getElementById('question_column'),
+                        field_name_column: document.getElementById('field_name_column'),
+                        datatype_column: document.getElementById('datatype_column'),
+                        question_serial_column: document.getElementById('question_serial_column')
+                    };
+                    
+                    // Clear and populate all dropdowns with available columns
+                    Object.values(dropdowns).forEach(dropdown => {
+                        dropdown.innerHTML = '<option value="">-- Select a column --</option>';
+                        data.columns.forEach(column => {
+                            const option = document.createElement('option');
+                            option.value = column.original;
+                            option.textContent = column.original;
+                            dropdown.appendChild(option);
+                        });
+                    });
+                    
+                    // Add change event listeners to update available options
+                    Object.entries(dropdowns).forEach(([id, dropdown]) => {
+                        dropdown.addEventListener('change', () => {
+                            const selectedValues = Object.values(dropdowns)
+                                .map(d => d.value)
+                                .filter(v => v !== '');
+                            
+                            // Update each dropdown's available options
+                            Object.entries(dropdowns).forEach(([dropdownId, d]) => {
+                                const currentValue = d.value;
+                                d.innerHTML = '<option value="">-- Select a column --</option>';
+                                
+                                data.columns.forEach(column => {
+                                    if (!selectedValues.includes(column.original) || column.original === currentValue) {
+                                        const option = document.createElement('option');
+                                        option.value = column.original;
+                                        option.textContent = column.original;
+                                        if (column.original === currentValue) {
+                                            option.selected = true;
+                                        }
+                                        d.appendChild(option);
+                                    }
+                                });
+                            });
+                        });
+                    });
+
+                    // Set up language support radio buttons
+                    const languageSupport = document.getElementsByName('language_support');
+                    const languageSelectionSection = document.getElementById('languageSelectionSection');
+                    const questionLanguagesCheckboxes = document.getElementById('questionLanguagesCheckboxes');
+                    const fieldLanguagesCheckboxes = document.getElementById('fieldLanguagesCheckboxes');
+
+                    // Function to create a checkbox element
+                    function createCheckbox(id, value, label) {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center';
+                        
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = id;
+                        checkbox.value = value;
+                        checkbox.name = id.includes('question') ? 'question_languages[]' : 'field_languages[]';
+                        checkbox.className = 'mr-2';
+                        
+                        const labelElement = document.createElement('label');
+                        labelElement.htmlFor = id;
+                        labelElement.textContent = label;
+                        labelElement.className = 'text-gray-700';
+                        
+                        div.appendChild(checkbox);
+                        div.appendChild(labelElement);
+                        return div;
+                    }
+
+                    // Function to populate language checkboxes
+                    function populateLanguageCheckboxes() {
+                        // Clear existing checkboxes
+                        questionLanguagesCheckboxes.innerHTML = '';
+                        fieldLanguagesCheckboxes.innerHTML = '';
+                        
+                        // Add all columns as checkboxes
+                        data.columns.forEach(col => {
+                            // Create checkbox for questions
+                            const questionCheckbox = createCheckbox(
+                                `question_${col.original.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                                col.original,
+                                col.original
+                            );
+                            questionLanguagesCheckboxes.appendChild(questionCheckbox);
+                            
+                            // Create checkbox for fields
+                            const fieldCheckbox = createCheckbox(
+                                `field_${col.original.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                                col.original,
+                                col.original
+                            );
+                            fieldLanguagesCheckboxes.appendChild(fieldCheckbox);
+                        });
+                    }
+
+                    // Add event listeners to radio buttons
+                    languageSupport.forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            if (this.value === 'yes') {
+                                languageSelectionSection.classList.remove('hidden');
+                                populateLanguageCheckboxes();
+                            } else {
+                                languageSelectionSection.classList.add('hidden');
+                            }
+                        });
+                    });
+
+                    // Show column selection section
+                    sheetSelectionSection.classList.add('hidden');
+                    columnSelectionSection.classList.remove('hidden');
+                    console.log("Column selection section shown");
+                } else {
+                    console.error("Error from server:", data.error);
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                console.error("Error fetching columns:", error);
+                alert('An error occurred while processing your request');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Navigation buttons
+        backBtn.addEventListener('click', function() {
+            console.log("Back button clicked");
+            fileUploadSection.classList.remove('hidden');
+            sheetSelectionSection.classList.add('hidden');
+        });
+        
+        backToSheetsBtn.addEventListener('click', function() {
+            console.log("Back to Sheets button clicked");
+            sheetSelectionSection.classList.remove('hidden');
+            columnSelectionSection.classList.add('hidden');
+        });
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            console.log("Form submitted");
+            e.preventDefault();
+            handleSubmit(false);
+        });
+
+        // Preview functionality
+        const previewModal = document.getElementById('previewModal');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+
+        function showPreview() {
+            // Update sheets section
+            const selectedSheets = getSelectedSheets();
+            document.getElementById('previewSheets').textContent = selectedSheets.join(', ');
+            document.getElementById('previewIdealSheet').textContent = idealSheet.value;
+
+            // Update columns section
+            document.getElementById('previewDatabaseColumn').textContent = document.getElementById('database_column').value;
+            document.getElementById('previewQuestionColumn').textContent = document.getElementById('question_column').value;
+            document.getElementById('previewFieldNameColumn').textContent = document.getElementById('field_name_column').value;
+            document.getElementById('previewDatatypeColumn').textContent = document.getElementById('datatype_column').value;
+            document.getElementById('previewQuestionSerialColumn').textContent = document.getElementById('question_serial_column').value;
+
+            // Update language section
+            const languageSupport = document.querySelector('input[name="language_support"]:checked').value;
+            const previewLanguageSection = document.getElementById('previewLanguageSection');
+            
+            if (languageSupport === 'yes') {
+                previewLanguageSection.classList.remove('hidden');
+                
+                // Update question languages
+                const questionLanguages = Array.from(
+                    document.querySelectorAll('input[name="question_languages[]"]:checked')
+                ).map(cb => cb.value);
+                const questionLanguagesList = document.getElementById('previewQuestionLanguages');
+                questionLanguagesList.innerHTML = questionLanguages.map(lang => `<li>${lang}</li>`).join('');
+                
+                // Update field languages
+                const fieldLanguages = Array.from(
+                    document.querySelectorAll('input[name="field_languages[]"]:checked')
+                ).map(cb => cb.value);
+                const fieldLanguagesList = document.getElementById('previewFieldLanguages');
+                fieldLanguagesList.innerHTML = fieldLanguages.map(lang => `<li>${lang}</li>`).join('');
+            } else {
+                previewLanguageSection.classList.add('hidden');
+            }
+
+            // Show modal
+            previewModal.classList.remove('hidden');
+        }
+
+        previewBtn.addEventListener('click', showPreview);
+        
+        closePreviewBtn.addEventListener('click', function() {
+            previewModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        previewModal.addEventListener('click', function(e) {
+            if (e.target === previewModal) {
+                previewModal.classList.add('hidden');
+            }
+        });
+
+        downloadBtn.addEventListener('click', function() {
+            console.log("Download button clicked");
+            
+            if (generatedFiles.length > 1) {
+                // Download all files as a zip
+                const filesJson = JSON.stringify(generatedFiles);
+                window.location.href = `{% url "excel_converter:download_all" %}?files=${encodeURIComponent(filesJson)}`;
+            } else {
+                // Download single file
+                const className = document.getElementById('id_class_name').value;
+                window.location.href = `{% url "excel_converter:download" filename="placeholder" %}`.replace('placeholder', `${className}.dart`);
+            }
+        });
+
+        // Check button functionality
+        const checkBtn = document.getElementById('checkBtn');
+        
+        async function validateSelections() {
+            // Check sheets
+            const selectedSheets = getSelectedSheets();
+            if (selectedSheets.length === 0) {
+                alert('Please select at least one sheet');
+                return false;
+            }
+            
+            // Check ideal sheet
+            if (!idealSheet.value) {
+                alert('Please select an ideal sheet');
+                return false;
+            }
+            
+            // Get selected columns
+            const selectedColumns = {
+                'Database Column': document.getElementById('database_column').value,
+                'Question Column': document.getElementById('question_column').value,
+                'Field Name Column': document.getElementById('field_name_column').value,
+                'Datatype Column': document.getElementById('datatype_column').value,
+                'Question Serial Column': document.getElementById('question_serial_column').value
+            };
+            
+            // Check if any required columns are missing
+            const missingSelections = Object.entries(selectedColumns)
+                .filter(([_, value]) => !value)
+                .map(([key, _]) => key);
+            
+            if (missingSelections.length > 0) {
+                alert(`Please select all required columns: ${missingSelections.join(', ')}`);
+                return false;
+            }
+            
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{% url "excel_converter:validate_columns" %}';
+            
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Add filename
+            const filenameInput = document.createElement('input');
+            filenameInput.type = 'hidden';
+            filenameInput.name = 'filename';
+            filenameInput.value = document.getElementById('filename').value;
+            form.appendChild(filenameInput);
+            
+            // Add sheets
+            const sheetsInput = document.createElement('input');
+            sheetsInput.type = 'hidden';
+            sheetsInput.name = 'sheets';
+            sheetsInput.value = JSON.stringify(selectedSheets);
+            form.appendChild(sheetsInput);
+            
+            // Add ideal sheet
+            const idealSheetInput = document.createElement('input');
+            idealSheetInput.type = 'hidden';
+            idealSheetInput.name = 'ideal_sheet';
+            idealSheetInput.value = idealSheet.value;
+            form.appendChild(idealSheetInput);
+            
+            // Add columns
+            const columnsInput = document.createElement('input');
+            columnsInput.type = 'hidden';
+            columnsInput.name = 'columns';
+            columnsInput.value = JSON.stringify(Object.values(selectedColumns));
+            form.appendChild(columnsInput);
+            
+            // Add column selections
+            Object.entries(selectedColumns).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key.toLowerCase().replace(/\s+/g, '_');
+                input.value = value;
+                form.appendChild(input);
+            });
+            
+            // Add language support options
+            const languageSupport = document.querySelector('input[name="language_support"]:checked').value;
+            const languageSupportInput = document.createElement('input');
+            languageSupportInput.type = 'hidden';
+            languageSupportInput.name = 'language_support';
+            languageSupportInput.value = languageSupport;
+            form.appendChild(languageSupportInput);
+            
+            if (languageSupport === 'yes') {
+                const questionLanguages = Array.from(
+                    document.querySelectorAll('input[name="question_languages[]"]:checked')
+                ).map(cb => cb.value);
+                
+                const fieldLanguages = Array.from(
+                    document.querySelectorAll('input[name="field_languages[]"]:checked')
+                ).map(cb => cb.value);
+                
+                if (questionLanguages.length === 0 || fieldLanguages.length === 0) {
+                    alert('Please select at least one column for both questions and fields');
+                    return false;
+                }
+                
+                const questionLanguagesInput = document.createElement('input');
+                questionLanguagesInput.type = 'hidden';
+                questionLanguagesInput.name = 'question_languages';
+                questionLanguagesInput.value = JSON.stringify(questionLanguages);
+                form.appendChild(questionLanguagesInput);
+                
+                const fieldLanguagesInput = document.createElement('input');
+                fieldLanguagesInput.type = 'hidden';
+                fieldLanguagesInput.name = 'field_languages';
+                fieldLanguagesInput.value = JSON.stringify(fieldLanguages);
+                form.appendChild(fieldLanguagesInput);
+            }
+            
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
+            
+            return true;
+        }
+        
+        checkBtn.addEventListener('click', validateSelections);
+    });
+</script>
+{% endblock %} 
