@@ -371,18 +371,88 @@ def download_all_files(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 def normalize_column_name(column):
-    """Normalize column names by removing special characters and converting to lowercase."""
+    """Normalize column names by removing special characters, spaces and converting to lowercase."""
     # Convert to string in case it's a number
     column = str(column)
-    # Replace special characters and spaces with underscore
-    normalized = re.sub(r'[^a-zA-Z0-9]', '_', column)
-    # Convert to lowercase
-    normalized = normalized.lower()
-    # Remove multiple consecutive underscores
-    normalized = re.sub(r'_+', '_', normalized)
-    # Remove leading/trailing underscores
-    normalized = normalized.strip('_')
+    # Remove spaces and convert to lowercase
+    normalized = column.lower().replace(' ', '')
+    # Replace special characters with empty string
+    normalized = re.sub(r'[^a-z0-9]', '', normalized)
     return normalized
+
+def validate_row_data(df, required_columns):
+    """Validate each row has required data."""
+    validation_results = {
+        'valid_rows': [],
+        'invalid_rows': []
+    }
+    
+    # Create a mapping of normalized column names to actual column names
+    column_mapping = {}
+    for col in df.columns:
+        norm_col = normalize_column_name(col)
+        column_mapping[norm_col] = col
+    
+    # Find matching columns for each required column
+    matched_columns = {}
+    for req_col in required_columns:
+        norm_req = normalize_column_name(req_col)
+        if norm_req in column_mapping:
+            matched_columns[req_col] = column_mapping[norm_req]
+        else:
+            matched_columns[req_col] = None
+    
+    # Find the English question column
+    question_col = None
+    for col in df.columns:
+        if normalize_column_name(col) in ['questionsinenglish', 'questioninengish', 'englishquestion']:
+            question_col = col
+            break
+    
+    for index, row in df.iterrows():
+        row_number = index + 2  # Adding 2 because Excel rows start at 1 and we have headers
+        missing_fields = []
+        
+        # Check if row is completely empty
+        if row.isna().all():
+            continue  # Skip completely empty rows
+            
+        # Check if row has any meaningful data
+        has_data = False
+        for col in df.columns:
+            value = str(row[col]).strip()
+            if value and value.lower() != 'nan':
+                has_data = True
+                break
+                
+        if not has_data:
+            continue  # Skip rows with no meaningful data
+        
+        # Skip validation if English question is empty
+        if question_col and (pd.isna(row[question_col]) or str(row[question_col]).strip() == '' or str(row[question_col]).lower() == 'nan'):
+            continue
+        
+        # Check each required column using the matched column names
+        for req_col in required_columns:
+            actual_col = matched_columns.get(req_col)
+            if actual_col and actual_col in df.columns:
+                value = str(row[actual_col]).strip()
+                if pd.isna(value) or value == '' or value.lower() == 'nan':
+                    if has_data:
+                        missing_fields.append(req_col)
+            else:
+                if has_data:
+                    missing_fields.append(req_col)
+        
+        if missing_fields:
+            validation_results['invalid_rows'].append({
+                'row_number': row_number,
+                'missing_fields': missing_fields
+            })
+        else:
+            validation_results['valid_rows'].append(row_number)
+    
+    return validation_results
 
 @swagger_auto_schema(
     method='post',
@@ -417,70 +487,60 @@ def validate_columns(request):
         datatype_column = request.POST.get('datatype_column', '')
         question_serial_column = request.POST.get('question_serial_column', '')
         
-        # Get language support options
-        language_support = request.POST.get('language_support', 'no')
-        question_languages = []
-        field_languages = []
+        # Required columns for row validation
+        required_row_columns = [
+            database_column,
+            question_column,
+            datatype_column,
+            question_serial_column
+        ]
         
-        if language_support == 'yes':
-            try:
-                question_languages = json.loads(request.POST.get('question_languages', '[]'))
-                field_languages = json.loads(request.POST.get('field_languages', '[]'))
-            except json.JSONDecodeError:
-                return JsonResponse({'error': 'Invalid language selection format'}, status=400)
-        
-        if not filename or not sheets or not columns_to_check:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required parameters'
-            })
-        
-        # Get the full path of the uploaded file
-        file_path = os.path.join(settings.MEDIA_ROOT, 'uploads', filename)
-        
-        # Dictionary to store missing columns and available columns for each sheet
-        result = {}
-        
-        # Read each sheet and check for columns
-        excel_file = pd.ExcelFile(file_path)
+        # Initialize validation results
+        result = {
+            'column_validation': {},
+            'row_validation': {}
+        }
         
         for sheet in sheets:
-            if sheet not in excel_file.sheet_names:
-                result[sheet] = {
-                    'missing': columns_to_check,
-                    'available': [],
-                    'normalized_map': {}
-                }
-                continue
-                
-            df = pd.read_excel(file_path, sheet_name=sheet)
+            # Process the Excel file for each sheet
+            df = process_excel_file(filename, sheet)
             
-            # Create a mapping of normalized names to original names
-            normalized_map = {normalize_column_name(col): col for col in df.columns}
+            # Remove completely empty rows
+            df = df.dropna(how='all')
             
-            # Normalize the columns we're checking for
-            normalized_to_check = [normalize_column_name(col) for col in columns_to_check]
+            # Create normalized column mapping
+            column_mapping = {}
+            for col in df.columns:
+                norm_col = normalize_column_name(col)
+                column_mapping[norm_col] = col
             
-            # Get all available normalized column names
-            available_normalized = [normalize_column_name(col) for col in df.columns]
+            # Validate columns exist in sheet (using normalized names)
+            missing_columns = []
+            present_columns = []
+            for col in columns_to_check:
+                norm_col = normalize_column_name(col)
+                if norm_col in column_mapping:
+                    present_columns.append(col)
+                else:
+                    missing_columns.append(col)
             
-            # Find which columns are missing
-            missing = [
-                columns_to_check[i] 
-                for i, norm in enumerate(normalized_to_check) 
-                if norm not in available_normalized
-            ]
+            result['column_validation'][sheet] = {
+                'missing': missing_columns,
+                'present': present_columns
+            }
             
-            if missing:
-                result[sheet] = {
-                    'missing': missing,
-                    'available': df.columns.tolist(),
-                    'normalized_map': normalized_map
-                }
+            # Validate row data
+            row_validation = validate_row_data(df, required_row_columns)
+            result['row_validation'][sheet] = row_validation
         
         # Check if there are any validation issues
-        has_issues = any(
-            result.get(sheet, {}).get('missing', [])
+        has_column_issues = any(
+            result['column_validation'].get(sheet, {}).get('missing', [])
+            for sheet in sheets
+        )
+        
+        has_row_issues = any(
+            len(result['row_validation'].get(sheet, {}).get('invalid_rows', [])) > 0
             for sheet in sheets
         )
         
@@ -493,11 +553,8 @@ def validate_columns(request):
             'field_name_column': field_name_column,
             'datatype_column': datatype_column,
             'question_serial_column': question_serial_column,
-            'language_support': language_support,
-            'question_languages': question_languages,
-            'field_languages': field_languages,
             'validation_result': result,
-            'has_issues': has_issues
+            'has_issues': has_column_issues or has_row_issues
         }
         
         return render(request, 'excel_converter/validation_results.html', context)
