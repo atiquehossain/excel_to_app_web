@@ -7,8 +7,8 @@ import zipfile
 import tempfile
 import pandas as pd
 import re
-from django.shortcuts import render
-from django.http import JsonResponse, FileResponse, HttpResponse
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, FileResponse, HttpResponse, HttpResponseRedirect
 from django.views.decorators.http import require_http_methods, require_POST
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -19,6 +19,8 @@ from drf_yasg import openapi
 from .forms import ExcelUploadForm
 from .utils import process_excel_file, get_excel_sheets
 from .dart_generator import generate_dart_code
+from django.urls import reverse
+from django.contrib import messages
 
 def index(request):
     """Render the main page."""
@@ -413,10 +415,10 @@ def validate_row_data(df, required_columns):
         row_number = index + 2  # Adding 2 because Excel rows start at 1 and we have headers
         missing_fields = []
         
-        # Check if row is completely empty
+        # Skip empty rows
         if row.isna().all():
-            continue  # Skip completely empty rows
-            
+            continue
+        
         # Check if row has any meaningful data
         has_data = False
         for col in df.columns:
@@ -426,20 +428,27 @@ def validate_row_data(df, required_columns):
                 break
                 
         if not has_data:
-            continue  # Skip rows with no meaningful data
+            continue
         
         # Skip validation if English question is empty
         if question_col and (pd.isna(row[question_col]) or str(row[question_col]).strip() == '' or str(row[question_col]).lower() == 'nan'):
             continue
         
-        # Check each required column using the matched column names
+        # Check each required column including language columns
         for req_col in required_columns:
             actual_col = matched_columns.get(req_col)
             if actual_col and actual_col in df.columns:
                 value = str(row[actual_col]).strip()
-                if pd.isna(value) or value == '' or value.lower() == 'nan':
-                    if has_data:
-                        missing_fields.append(req_col)
+                # For language columns, only validate if the English question exists
+                if ('Questions in' in req_col or 'Field Names in' in req_col):
+                    if has_data and question_col and not pd.isna(row[question_col]):
+                        if pd.isna(value) or value == '' or value.lower() == 'nan':
+                            missing_fields.append(req_col)
+                else:
+                    # For non-language columns, validate normally
+                    if pd.isna(value) or value == '' or value.lower() == 'nan':
+                        if has_data:
+                            missing_fields.append(req_col)
             else:
                 if has_data:
                     missing_fields.append(req_col)
@@ -480,12 +489,37 @@ def validate_columns(request):
         sheets = json.loads(request.POST.get('sheets', '[]'))
         columns_to_check = json.loads(request.POST.get('columns', '[]'))
         
+        # Validate that we have at least one sheet
+        if not sheets:
+            return JsonResponse({'error': 'Please select at least one sheet'}, status=400)
+        
+        # Get ideal sheet, default to the first sheet if not specified
+        ideal_sheet = request.POST.get('ideal_sheet')
+        if not ideal_sheet:
+            ideal_sheet = sheets[0]
+        
+        # Validate ideal sheet is in selected sheets
+        if ideal_sheet not in sheets:
+            return JsonResponse({'error': 'Ideal sheet must be one of the selected sheets'}, status=400)
+        
         # Get column selections
         database_column = request.POST.get('database_column', '')
         question_column = request.POST.get('question_column', '')
         field_name_column = request.POST.get('field_name_column', '')
         datatype_column = request.POST.get('datatype_column', '')
         question_serial_column = request.POST.get('question_serial_column', '')
+        
+        # Get language support options
+        language_support = request.POST.get('language_support', 'no')
+        question_languages = []
+        field_languages = []
+        
+        if language_support == 'yes':
+            try:
+                question_languages = json.loads(request.POST.get('question_languages', '[]'))
+                field_languages = json.loads(request.POST.get('field_languages', '[]'))
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid language selection format'}, status=400)
         
         # Required columns for row validation
         required_row_columns = [
@@ -494,6 +528,22 @@ def validate_columns(request):
             datatype_column,
             question_serial_column
         ]
+        
+        # Add language columns to required columns if language support is enabled
+        if language_support == 'yes':
+            # Add question language columns
+            for lang in question_languages:
+                if lang.lower() != 'english':  # English is already in required columns
+                    # Remove duplicate "Questions in" prefix if it exists
+                    lang = lang.replace('Questions in ', '')
+                    required_row_columns.append(f'Questions in {lang}')
+            
+            # Add field language columns
+            for lang in field_languages:
+                if lang.lower() != 'english':  # English is already in required columns
+                    # Remove duplicate "Field Names in " prefix if it exists
+                    lang = lang.replace('Field Names in ', '')
+                    required_row_columns.append(f'Field Names in {lang}')
         
         # Initialize validation results
         result = {
@@ -517,7 +567,25 @@ def validate_columns(request):
             # Validate columns exist in sheet (using normalized names)
             missing_columns = []
             present_columns = []
-            for col in columns_to_check:
+            
+            # Check base required columns
+            columns_to_validate = columns_to_check.copy()
+            
+            # Add language columns to validation if language support is enabled
+            if language_support == 'yes':
+                for lang in question_languages:
+                    if lang.lower() != 'english':
+                        # Remove duplicate "Questions in" prefix if it exists
+                        lang = lang.replace('Questions in ', '')
+                        columns_to_validate.append(f'Questions in {lang}')
+                
+                for lang in field_languages:
+                    if lang.lower() != 'english':
+                        # Remove duplicate "Field Names in " prefix if it exists
+                        lang = lang.replace('Field Names in ', '')
+                        columns_to_validate.append(f'Field Names in {lang}')
+            
+            for col in columns_to_validate:
                 norm_col = normalize_column_name(col)
                 if norm_col in column_mapping:
                     present_columns.append(col)
@@ -529,7 +597,7 @@ def validate_columns(request):
                 'present': present_columns
             }
             
-            # Validate row data
+            # Validate row data including language columns
             row_validation = validate_row_data(df, required_row_columns)
             result['row_validation'][sheet] = row_validation
         
@@ -544,15 +612,29 @@ def validate_columns(request):
             for sheet in sheets
         )
         
-        # Prepare context for template
+        try:
+            # Store data in session
+            request.session['selected_sheets'] = sheets
+            request.session['ideal_sheet'] = ideal_sheet
+        except Exception as session_error:
+            print(f"Warning: Could not store data in session: {session_error}")
+        
+        if not has_column_issues and not has_row_issues:
+            # If no issues, redirect to app builder
+            return HttpResponseRedirect(reverse('excel_converter:app_builder'))
+        
+        # If there are issues, show validation results
         context = {
             'sheets': sheets,
-            'ideal_sheet': request.POST.get('ideal_sheet', sheets[0] if sheets else ''),
+            'ideal_sheet': ideal_sheet,
             'database_column': database_column,
             'question_column': question_column,
             'field_name_column': field_name_column,
             'datatype_column': datatype_column,
             'question_serial_column': question_serial_column,
+            'language_support': language_support,
+            'question_languages': question_languages,
+            'field_languages': field_languages,
             'validation_result': result,
             'has_issues': has_column_issues or has_row_issues
         }
@@ -560,6 +642,7 @@ def validate_columns(request):
         return render(request, 'excel_converter/validation_results.html', context)
         
     except Exception as e:
+        print(f"Error in validate_columns: {e}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -642,4 +725,25 @@ def get_columns(request):
     
     except Exception as e:
         print(f"Error in get_columns view: {e}")
-        return JsonResponse({'error': str(e)}, status=500) 
+        return JsonResponse({'error': str(e)}, status=500)
+
+def app_builder(request):
+    """Render the app builder setup page."""
+    # Get sheets from session if available
+    sheets = request.session.get('selected_sheets', [])
+    ideal_sheet = request.session.get('ideal_sheet', '')
+    
+    if not sheets:
+        # If no sheets in session, redirect back to index
+        messages.error(request, 'Please select sheets first')
+        return redirect('excel_converter:index')
+    
+    # Ensure ideal_sheet is set
+    if not ideal_sheet and sheets:
+        ideal_sheet = sheets[0]
+    
+    context = {
+        'sheets': sheets,
+        'ideal_sheet': ideal_sheet
+    }
+    return render(request, 'excel_converter/app_builder.html', context) 

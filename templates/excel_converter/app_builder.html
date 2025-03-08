@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Welcome to Excel to Register App Builder</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">App Configuration</h2>
+            
+            <form id="appBuilderForm" class="space-y-6">
+                <!-- App Name -->
+                <div>
+                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">
+                        App Name
+                    </label>
+                    <input type="text" 
+                           id="appName" 
+                           name="appName" 
+                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter your app name"
+                           required>
+                    <p class="mt-1 text-sm text-gray-500">
+                        This will be used as the main class name for your app
+                    </p>
+                </div>
+
+                <!-- Sheet Class Names -->
+                <div>
+                    <h3 class="text-lg font-medium mb-3">Sheet Class Names</h3>
+                    <div class="space-y-4">
+                        <!-- Ideal Sheet -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Ideal Sheet Class Name
+                            </label>
+                            <input type="text" 
+                                   name="sheet_class_{{ ideal_sheet }}" 
+                                   value="{{ ideal_sheet|title }}"
+                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   required>
+                            <p class="mt-1 text-xs text-gray-500">
+                                (Ideal Sheet: {{ ideal_sheet }})
+                            </p>
+                        </div>
+
+                        <!-- Other Sheets -->
+                        {% for sheet in sheets %}
+                            {% if sheet != ideal_sheet %}
+                            <div class="p-4 border rounded-lg">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Sheet Class Name
+                                </label>
+                                <input type="text" 
+                                       name="sheet_class_{{ sheet }}" 
+                                       value="{{ sheet|title }}"
+                                       class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       required>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    (Sheet: {{ sheet }})
+                                </p>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-end space-x-4">
+                    <button type="button" 
+                            onclick="window.history.back()" 
+                            class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                        Back
+                    </button>
+                    <button type="submit" 
+                            class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                        Continue
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('appBuilderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate class names
+    const inputs = this.querySelectorAll('input[type="text"]');
+    let isValid = true;
+    
+    inputs.forEach(input => {
+        // Remove spaces and special characters
+        input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
+        
+        // Ensure first character is a letter
+        if (!/^[a-zA-Z]/.test(input.value)) {
+            alert('Class names must start with a letter');
+            isValid = false;
+        }
+    });
+    
+    if (isValid) {
+        // Continue with form submission
+        // Add your form submission logic here
+    }
+});
+</script>
+{% endblock %} 

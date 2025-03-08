@@ -16,4 +16,5 @@ urlpatterns = [
     path('preview/', views.preview_code, name='preview'),
     path('download/<str:filename>/', views.download_file, name='download'),
     path('download-all/', views.download_all_files, name='download_all'),
+    path('app-builder/', views.app_builder, name='app_builder'),
 ] 

@@ -53,18 +53,18 @@
             <h2 class="text-xl font-semibold mb-4">Language Support</h2>
             <div class="space-y-4">
                 <div>
-                    <p class="font-medium">Selected Question Columns:</p>
+                    <p class="font-medium">Selected Question Languages:</p>
                     <ul class="list-disc list-inside text-gray-700">
                         {% for lang in question_languages %}
-                        <li>{{ lang }}</li>
+                        <li>Questions in {{ lang }}</li>
                         {% endfor %}
                     </ul>
                 </div>
                 <div>
-                    <p class="font-medium">Selected Field Columns:</p>
+                    <p class="font-medium">Selected Field Languages:</p>
                     <ul class="list-disc list-inside text-gray-700">
                         {% for lang in field_languages %}
-                        <li>{{ lang }}</li>
+                        <li>Field Names in {{ lang }}</li>
                         {% endfor %}
                     </ul>
                 </div>
