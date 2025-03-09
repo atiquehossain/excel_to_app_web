@@ -132,10 +132,10 @@
                                 class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
                             Preview Selections
                         </button>
-                        <button type="submit" id="generateBtn"
+                        <!-- <button type="submit" id="generateBtn"
                                 class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             Generate Code
-                        </button>
+                        </button> -->
                     </div>
                     <button type="button" id="backToSheetsBtn" class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2">
                         Back to Sheet Selection
@@ -145,7 +145,7 @@
         </form>
     </div>
 
-    <!-- Generated Code -->
+    <!-- Generated Code 
     <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-semibold">Generated Code</h2>
@@ -156,7 +156,7 @@
         <div class="bg-gray-800 rounded-lg p-4">
             <pre><code class="language-dart" id="codeOutput">// Generated code will appear here...</code></pre>
         </div>
-    </div>
+    </div> -->
 </div>
 
 <!-- Loading Overlay -->
@@ -248,7 +248,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('uploadForm');
         const previewBtn = document.getElementById('previewBtn');
-        const generateBtn = document.getElementById('generateBtn');
+       // const generateBtn = document.getElementById('generateBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const codeOutput = document.getElementById('codeOutput');
@@ -753,19 +753,19 @@
             }
         });
 
-        downloadBtn.addEventListener('click', function() {
-            console.log("Download button clicked");
+        // downloadBtn.addEventListener('click', function() {
+        //     console.log("Download button clicked");
             
-            if (generatedFiles.length > 1) {
-                // Download all files as a zip
-                const filesJson = JSON.stringify(generatedFiles);
-                window.location.href = `{% url "excel_converter:download_all" %}?files=${encodeURIComponent(filesJson)}`;
-            } else {
-                // Download single file
-                const className = document.getElementById('id_class_name').value;
-                window.location.href = `{% url "excel_converter:download" filename="placeholder" %}`.replace('placeholder', `${className}.dart`);
-            }
-        });
+        //     if (generatedFiles.length > 1) {
+        //         // Download all files as a zip
+        //         const filesJson = JSON.stringify(generatedFiles);
+        //         window.location.href = `{% url "excel_converter:download_all" %}?files=${encodeURIComponent(filesJson)}`;
+        //     } else {
+        //         // Download single file
+        //         const className = document.getElementById('id_class_name').value;
+        //         window.location.href = `{% url "excel_converter:download" filename="placeholder" %}`.replace('placeholder', `${className}.dart`);
+        //     }
+        // });
 
         // Check button functionality
         const checkBtn = document.getElementById('checkBtn');
