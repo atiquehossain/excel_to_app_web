@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -37,6 +38,20 @@
                         id="language-keys-tab"
                     >
                         Language Keys
+                    </button>
+                    <button 
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
+                        onclick="showPreviewTab('key-values')"
+                        id="key-values-tab"
+                    >
+                        Key Values
+                    </button>
+                    <button 
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
+                        onclick="showPreviewTab('ui-code')"
+                        id="ui-code-tab"
+                    >
+                        UI Code
                     </button>
                 </nav>
             </div>
@@ -98,6 +113,104 @@
 }</code></pre>
                 </div>
             </div>
+            
+            <!-- Key Values Tab Content -->
+            <div id="key-values-content" class="tab-content hidden">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Key Value Pairs</h2>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <pre class="text-white"><code>abstract class Languages {
+{% for file in generated_files %}
+  // {{ file.sheet }} Questions
+  {% if file.questions %}
+    {% for question in file.questions %}
+  String get {{ question.key }} => "{{ question.question }}";
+    {% endfor %}
+  {% endif %}
+
+  // {{ file.sheet }} Fields
+  {% if file.fields %}
+    {% for field in file.fields %}
+  String get {{ field.key }} => "{{ field.field }}";
+    {% endfor %}
+  {% endif %}
+
+{% endfor %}
+}</code></pre>
+                </div>
+            </div>
+            
+            <!-- UI Code Tab Content -->
+            <div id="ui-code-content" class="tab-content hidden">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">UI Implementation</h2>
+                </div>
+                
+                <!-- UI Files Navigation -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex space-x-4" aria-label="UI Tabs">
+                        {% for file in generated_files %}
+                        <button 
+                            class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
+                                   {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
+                            onclick="showUITab('{{ file.class_name }}')"
+                        >
+                            {{ file.sheet }}
+                        </button>
+                        {% endfor %}
+                    </nav>
+                </div>
+                
+                <!-- UI Code Content -->
+                {% for file in generated_files %}
+                <div id="ui-{{ file.class_name }}" 
+                     class="ui-content {% if not forloop.first %}hidden{% endif %}">
+                    <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                        <pre class="text-white"><code>class {{ file.class_name }}UI extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+{% if file.questions %}
+    {% for question in file.questions %}
+        /// Question number = {{ question.question_no|default:forloop.counter }}
+        /// Field type = {{ question.field_type }}
+        {{ file.class_name }}Data(
+          number: {{ question.question_no|default:forloop.counter }},
+          condition: numbers.contains({{ question.question_no|default:forloop.counter }}),
+          widget: {{ file.class_name }}Widget(
+            question: Languages.getText(context)!.{{ question.key }},
+            fieldType: {% if question.field_type == 'radio' %}AppConstant.FieldType_radio
+{% elif question.field_type == 'dropdown' %}AppConstant.FieldType_dropdown
+{% elif question.field_type == 'multiple choice' %}AppConstant.FieldType_multiple_choice
+{% elif question.field_type == 'number' %}AppConstant.FieldType_NumberText
+{% elif question.database == 'natural_disasters_affected' %}AppConstant.FieldType_multiple_choice
+{% elif question.database == 'lost_income_6_month' %}AppConstant.FieldType_dropdown
+{% elif question.database == 'income_lost' %}AppConstant.FieldType_multiple_choice
+{% elif question.database == 'loss_of_livelihood' %}AppConstant.FieldType_dropdown
+{% elif question.database == 'loss_of_livelihood_type' %}AppConstant.FieldType_multiple_choice
+{% else %}AppConstant.FieldType_EditText{% endif %},
+            {% if question.field_type == 'Number' %}keyboardType: TextInputType.number,{% endif %}
+            field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},
+            dataList: {% if question.field_type == 'Number' or question.field_type == 'Text' %}null
+                     {% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }})
+                     {% endif %},
+            onChanged: (value) {
+              {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
+            },
+          ),
+        ),
+    {% endfor %}
+{% endif %}
+      ],
+    );
+  }
+}</code></pre>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         
         <!-- Action Buttons -->
@@ -152,6 +265,22 @@ function downloadAll() {
     const fileNames = files.map(f => f.class_name + '.dart');
     const url = `{% url 'excel_converter:download_all' %}?files=${encodeURIComponent(JSON.stringify(fileNames))}`;
     window.location.href = url;
+}
+
+function showUITab(className) {
+    // Hide all UI content
+    document.querySelectorAll('.ui-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Show selected UI content
+    document.getElementById(`ui-${className}`).classList.remove('hidden');
+    
+    // Update UI tab button styles
+    document.querySelectorAll('nav[aria-label="UI Tabs"] button').forEach(button => {
+        button.classList.remove('bg-gray-100', 'border-b-2', 'border-blue-500');
+    });
+    event.currentTarget.classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
 }
 </script>
 {% endblock %} 

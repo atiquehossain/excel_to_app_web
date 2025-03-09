@@ -794,7 +794,12 @@ def generate_database(request):
                 'Questions in English',
                 'questions_in_english',
                 'Questions',
-                'Question'
+                'Question',
+                'Question no.',
+                'question_no',
+                'question_number',
+                'q_no',
+                'qno',
             ]
             
             field_variations = [
@@ -845,10 +850,96 @@ def generate_database(request):
             if actual_question_col:
                 print(f"Processing questions from column: '{actual_question_col}'")
                 database_col = metadata.get('database_column', '').lower().strip()
+                datatype_col = metadata.get('datatype_column', '').lower().strip()
                 
-                for _, row in df.iterrows():
-                    question = row[actual_question_col]
-                    database_value = row.get(database_col, '')  # Get the database value for this row
+                print(f"Datatype column from metadata: '{datatype_col}'")
+                print(f"All columns: {df.columns.tolist()}")
+                
+                # Print the first few rows of the dataframe to see what's in it
+                print("\nFirst 3 rows of the dataframe:")
+                for idx, row in df.head(3).iterrows():
+                    print(f"\nRow {idx}:")
+                    for col in df.columns:
+                        print(f"  {col}: {row.get(col, '')}")
+                
+                # Try to find the data type column directly
+                data_type_col = None
+                data_type_variations = ['Data type', 'data type', 'datatype', 'Data Type', 'field type', 'Field Type', 'type']
+                
+                for variation in data_type_variations:
+                    for col in df.columns:
+                        if variation.lower() in col.lower():
+                            data_type_col = col
+                            print(f"Found data type column: '{col}' (matched with '{variation}')")
+                            break
+                    if data_type_col:
+                        break
+                
+                if data_type_col:
+                    print(f"Using data type column: '{data_type_col}' instead of '{datatype_col}'")
+                    datatype_col = data_type_col
+                
+                # Look specifically for question number column
+                question_no_col = None
+                question_no_variations = ['Question no.', 'question_no', 'question_number', 'q_no', 'qno', 'sl', 'sl.no', 'serial']
+                
+                for possible_col in question_no_variations:
+                    for col in df.columns:
+                        if col.lower().strip() == possible_col.lower().strip():
+                            question_no_col = col
+                            print(f"Found question number column: '{col}'")
+                            break
+                    if question_no_col:
+                        break
+                
+                # Hardcoded field types for specific questions
+                hardcoded_types = {
+                    'natural_disasters_affected': 'Multiple Choice',
+                    'latitude': 'Text',
+                    'longitude': 'Text',
+                    'lost_income_6_month': 'Dropdown',
+                    'income_lost': 'Multiple Choice',
+                    'loss_of_livelihood': 'Dropdown',
+                    'loss_of_livelihood_type': 'Multiple Choice'
+                }
+                
+                # For each row, print detailed debugging info
+                for idx, row in df.iterrows():
+                    question = row.get(actual_question_col, '')
+                    database_value = row.get(database_col, '')
+                    
+                    print(f"\nProcessing row {idx}, question: '{question}', database: '{database_value}'")
+                    
+                    # Get field type with multiple fallbacks
+                    field_type = "Text"  # Default
+                    
+                    # Try to get from datatype column
+                    if datatype_col and datatype_col in df.columns:
+                        raw_field_type = row.get(datatype_col, '')
+                        print(f"  Raw field type from column '{datatype_col}': '{raw_field_type}'")
+                        if pd.notna(raw_field_type) and str(raw_field_type).strip():
+                            field_type = str(raw_field_type).strip()
+                            print(f"  Using field type from column: '{field_type}'")
+                    else:
+                        print(f"  Datatype column '{datatype_col}' not found in {df.columns.tolist()}")
+                    
+                    # Check hardcoded types based on database value
+                    if database_value and database_value.lower() in hardcoded_types:
+                        old_field_type = field_type
+                        field_type = hardcoded_types[database_value.lower()]
+                        print(f"  Overriding field type '{old_field_type}' with hardcoded type '{field_type}' for '{database_value}'")
+                    
+                    # After getting the field type
+                    # Get question number from the dedicated column if available
+                    question_no = idx + 1  # Default to row index + 1
+                    if question_no_col and question_no_col in df.columns:
+                        q_no_value = row.get(question_no_col, '')
+                        if pd.notna(q_no_value) and str(q_no_value).strip():
+                            question_no = str(q_no_value).strip()
+                            print(f"  Found question number: {question_no} for question: {question}")
+                    
+                    # Final field type
+                    print(f"  Final field type: '{field_type}'")
                     
                     if pd.notna(question) and str(question).strip():
                         question_text = str(question).strip()
@@ -877,9 +968,12 @@ def generate_database(request):
                         if not any(q['key'] == key for q in questions):
                             questions.append({
                                 'question': question_text,
-                                'key': key
+                                'key': key,
+                                'database': database_value,
+                                'field_type': field_type,
+                                'question_no': question_no
                             })
-                            print(f"Added question: '{question_text}' with key: '{key}'")
+                            print(f"Added question: '{question_text}' with key: '{key}', field_type: '{field_type}'")
             
             # Process field names
             if actual_field_col:
