@@ -174,8 +174,8 @@
       children: [
 {% if file.questions %}
     {% for question in file.questions %}
-        /// Question number = {{ question.question_no|default:forloop.counter }}
-        /// Field type = {{ question.field_type }}
+        /// Number = {{ question.question_no|default:forloop.counter }}
+       
         {{ file.class_name }}Data(
           number: {{ question.question_no|default:forloop.counter }},
           condition: numbers.contains({{ question.question_no|default:forloop.counter }}),
