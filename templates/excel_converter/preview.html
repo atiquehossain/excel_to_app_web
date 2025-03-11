@@ -2,31 +2,45 @@
 {% load custom_filters %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-4 py-8 text-gray-900 dark:text-gray-100">
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8">Code Preview</h1>
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-gray-100">Code Preview</h1>
+        
+        <!-- Add this near the top of your content, maybe in the header area -->
+        <div class="flex justify-end mb-4">
+            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600">
+                <!-- Sun icon -->
+                <svg id="light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
+                </svg>
+                <!-- Moon icon -->
+                <svg id="dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                </svg>
+            </button>
+        </div>
         
         <!-- App Info -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4">Generated App Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="font-medium">App Name:</p>
-                    <p class="text-gray-700">{{ app_name }}</p>
+                    <p class="text-gray-700 dark:text-gray-300">{{ app_name }}</p>
                 </div>
                 <div>
                     <p class="font-medium">Ideal Sheet:</p>
-                    <p class="text-gray-700">{{ ideal_sheet }}</p>
+                    <p class="text-gray-700 dark:text-gray-300">{{ ideal_sheet }}</p>
                 </div>
             </div>
         </div>
         
         <!-- Tab Navigation -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <div class="border-b border-gray-200 mb-4">
                 <nav class="flex space-x-4" aria-label="Tabs">
                     <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 bg-gray-100 border-b-2 border-blue-500"
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-100 dark:bg-gray-700 border-b-2 border-blue-500"
                         onclick="showPreviewTab('models')"
                         id="models-tab"
                     >
@@ -88,7 +102,10 @@
                 {% for file in generated_files %}
                 <div id="model-{{ file.class_name }}" 
                      class="model-content {% if not forloop.first %}hidden{% endif %}">
-                    <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                            Copy
+                        </button>
                         <pre class="text-white"><code>{{ file.generated_code|default:"// Code will be generated here" }}</code></pre>
                     </div>
                 </div>
@@ -100,7 +117,10 @@
                 <div class="mb-4">
                     <h2 class="text-xl font-semibold">Language Keys</h2>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                        Copy
+                    </button>
                     <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
@@ -126,7 +146,10 @@
                 <div class="mb-4">
                     <h2 class="text-xl font-semibold">Key Value Pairs</h2>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                        Copy
+                    </button>
                     <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
@@ -153,7 +176,10 @@
                 <div class="mb-4">
                     <h2 class="text-xl font-semibold">Setup Data</h2>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                        Copy
+                    </button>
                     <pre class="text-white"><code>class SetupConstant {
 {% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
   static const String {{ question.database }} = "{{ question.database }}";{% endif %}{% endfor %}{% endif %}{% endfor %}
@@ -209,7 +235,10 @@ class SetupData {
                 {% for file in generated_files %}
                 <div id="ui-{{ file.class_name }}" 
                      class="ui-content {% if not forloop.first %}hidden{% endif %}">
-                    <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                            Copy
+                        </button>
                         <pre class="text-white"><code>class {{ file.class_name }}UI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -314,5 +343,63 @@ function showUITab(className) {
     });
     event.currentTarget.classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
 }
+
+function copyCode(button) {
+    const preElement = button.nextElementSibling;
+    const codeElement = preElement.querySelector('code');
+    const text = codeElement.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        // Change button text temporarily
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.classList.add('bg-green-600');
+        
+        // Reset button text after 2 seconds
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('bg-green-600');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        button.textContent = 'Failed to copy';
+        button.classList.add('bg-red-600');
+        
+        setTimeout(() => {
+            button.textContent = 'Copy';
+            button.classList.remove('bg-red-600');
+        }, 2000);
+    });
+}
+
+// Check for saved theme preference, otherwise use system preference
+if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    document.getElementById('light-icon').classList.remove('hidden');
+} else {
+    document.documentElement.classList.remove('dark');
+    document.getElementById('dark-icon').classList.remove('hidden');
+}
+
+// Theme toggle button functionality
+const themeToggle = document.getElementById('theme-toggle');
+const darkIcon = document.getElementById('dark-icon');
+const lightIcon = document.getElementById('light-icon');
+
+themeToggle.addEventListener('click', () => {
+    // Toggle theme
+    document.documentElement.classList.toggle('dark');
+    
+    // Update icons
+    darkIcon.classList.toggle('hidden');
+    lightIcon.classList.toggle('hidden');
+    
+    // Save preference
+    if (document.documentElement.classList.contains('dark')) {
+        localStorage.theme = 'dark';
+    } else {
+        localStorage.theme = 'light';
+    }
+});
 </script>
 {% endblock %} 

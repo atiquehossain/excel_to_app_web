@@ -8,21 +8,49 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-dart.min.js"></script>
+    <script>
+        // Check and apply theme immediately to prevent flash of wrong theme
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {}
+            }
+        }
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow-lg">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <nav class="bg-white dark:bg-gray-800 shadow-lg">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center">
-                    <a href="{% url 'excel_converter:index' %}" class="text-xl font-bold text-gray-800">Excel to Dart</a>
+                    <h1 class="text-xl font-bold text-gray-800 dark:text-white">
+                        <a href="{% url 'excel_converter:index' %}">Excel to Dart</a>
+                    </h1>
+                    <p class="ml-4 text-sm text-gray-600 dark:text-gray-300">
+                        Convert Excel to Dart/Flutter code
+                    </p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="{% url 'excel_converter:index' %}" class="text-gray-600 hover:text-gray-800">Home</a>
-                    <a href="{% url 'excel_converter:docs' %}" class="text-gray-600 hover:text-gray-800">Documentation</a>
-                    <a href="https://github.com/yourusername/excel-mapper" target="_blank" class="text-gray-600 hover:text-gray-800">
-                        GitHub
-                    </a>
+                    <a href="{% url 'excel_converter:index' %}" class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Home</a>
+                    <a href="{% url 'excel_converter:docs' %}" class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">Documentation</a>
+                    <a href="https://github.com/yourusername/excel-mapper" target="_blank" class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">GitHub</a>
+                    <button id="theme-toggle" 
+                            class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                            aria-label="Toggle theme">
+                        <svg id="light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
+                        </svg>
+                        <svg id="dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -32,7 +60,7 @@
         {% if messages %}
         <div class="mb-8">
             {% for message in messages %}
-            <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+            <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200{% else %}bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200{% endif %}">
                 {{ message }}
             </div>
             {% endfor %}
@@ -42,13 +70,43 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white shadow-lg mt-8">
+    <footer class="bg-white dark:bg-gray-800 shadow-lg mt-8">
         <div class="container mx-auto px-4 py-6">
-            <div class="text-center text-gray-600">
+            <div class="text-center text-gray-600 dark:text-gray-300">
                 <p>&copy; {% now "Y" %} Excel to Dart Code Generator. All rights reserved.</p>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Theme initialization and toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const darkIcon = document.getElementById('dark-icon');
+            const lightIcon = document.getElementById('light-icon');
+
+            // Initialize icons based on current theme
+            function updateIcons() {
+                if (document.documentElement.classList.contains('dark')) {
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                } else {
+                    darkIcon.classList.remove('hidden');
+                    lightIcon.classList.add('hidden');
+                }
+            }
+
+            // Initial icon setup
+            updateIcons();
+
+            // Toggle theme
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                updateIcons();
+                localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            });
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>
