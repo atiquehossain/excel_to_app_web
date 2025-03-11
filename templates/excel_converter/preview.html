@@ -155,15 +155,8 @@
                 </div>
                 <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
                     <pre class="text-white"><code>class SetupConstant {
-{% for file in generated_files %}
-  {% if file.questions %}
-    {% for question in file.questions %}
-      {% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
-  static const String {{ question.database }} = "{{ question.database }}";
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-{% endfor %}
+{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+  static const String {{ question.database }} = "{{ question.database }}";{% endif %}{% endfor %}{% endif %}{% endfor %}
 }
 
 class SetupData {
@@ -172,22 +165,10 @@ class SetupData {
     String modelName,
   ) {
     List<SetupModel> items = [];
-    
-{% for file in generated_files %}
-  {% if file.questions %}
-    {% for question in file.questions %}
-      {% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
-    if (modelName == SetupConstant.{{ question.database }}) {
-      {% for field in file.fields %}
-        {% if field.database_value == question.database %}
-      items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ forloop.counter }}"));
-        {% endif %}
-      {% endfor %}
-    }
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-{% endfor %}
+{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}    
+    if (modelName == SetupConstant.{{ question.database }}) {{% with counter=1 %}{% for field in file.fields %}{% if field.database_value == question.database %}
+      items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ counter }}"));{% with counter=counter|add:1 %}{% endwith %}{% endif %}{% endfor %}{% endwith %}
+    }{% endif %}{% endfor %}{% endif %}{% endfor %}
     
     return items;
   }
