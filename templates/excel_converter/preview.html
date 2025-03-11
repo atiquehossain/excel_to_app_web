@@ -48,6 +48,13 @@
                     </button>
                     <button 
                         class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
+                        onclick="showPreviewTab('setup-data')"
+                        id="setup-data-tab"
+                    >
+                        Setup Data
+                    </button>
+                    <button 
+                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
                         onclick="showPreviewTab('ui-code')"
                         id="ui-code-tab"
                     >
@@ -137,6 +144,57 @@
   {% endif %}
 
 {% endfor %}
+}</code></pre>
+                </div>
+            </div>
+            
+            <!-- Setup Data Tab Content -->
+            <div id="setup-data-content" class="tab-content hidden">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Setup Data</h2>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                    <pre class="text-white"><code>class SetupConstant {
+{% for file in generated_files %}
+  {% if file.questions %}
+    {% for question in file.questions %}
+      {% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+  static const String {{ question.database }} = "{{ question.database }}";
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+}
+
+class SetupData {
+  static List<SetupModel> _getData(
+    BuildContext context,
+    String modelName,
+  ) {
+    List<SetupModel> items = [];
+    
+{% for file in generated_files %}
+  {% if file.questions %}
+    {% for question in file.questions %}
+      {% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+    if (modelName == SetupConstant.{{ question.database }}) {
+      {% for field in file.fields %}
+        {% if field.database_value == question.database %}
+      items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ forloop.counter }}"));
+        {% endif %}
+      {% endfor %}
+    }
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+    
+    return items;
+  }
+  
+  static List<SetupModel> getDropDownItems(BuildContext context, String modelName) {
+    return _getData(context, modelName);
+  }
 }</code></pre>
                 </div>
             </div>
