@@ -1,3 +1,5 @@
+import pandas as pd
+
 class ExcelConverterView:
     """Main view for handling Excel file processing and code generation"""
     
@@ -24,12 +26,41 @@ class ExcelConverterView:
         - Reads sheet contents
         - Identifies column headers
         - Returns available columns for mapping
-        - Helps user select ideal sheet for reference
         """
-        # Reads selected sheets
-        # Extracts columns
-        # Returns column list
-        
+        try:
+            # Define expected column mappings
+            COLUMN_MAPPINGS = {
+                'database_name': ['database name', 'database_name', 'databasename', 'db_name'],
+                'questions_in_english': ['questions in english', 'questions_in_english', 'question_english'],
+                'datatype': ['datatype', 'data_type', 'type'],
+                'field_names_in_english': ['field names in english', 'field_names_in_english', 'field_name'],
+                'question_sr': ['question sr', 'question_sr', 'sr_no', 'serial']
+            }
+
+            # Get the DataFrame from Excel
+            df = pd.read_excel(file_path)
+            
+            # Try to match columns using various possible names
+            for expected_col, possible_names in COLUMN_MAPPINGS.items():
+                found_col = None
+                for name in possible_names:
+                    if name in df.columns:
+                        found_col = name
+                        break
+                
+                if not found_col:
+                    raise ValueError(f"Column '{expected_col}' not found. Available columns: {', '.join(df.columns)}")
+                
+                # Rename column to standard name if needed
+                if found_col != expected_col:
+                    df = df.rename(columns={found_col: expected_col})
+
+            # Continue with processing...
+            return df
+
+        except Exception as e:
+            raise ValueError(f"Error processing Excel file: {str(e)}")
+
     def generate_code(self, request):
         """
         Operation: Code Generation (Final Step)
