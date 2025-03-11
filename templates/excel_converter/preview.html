@@ -165,9 +165,13 @@ class SetupData {
     String modelName,
   ) {
     List<SetupModel> items = [];
-{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}    
-    if (modelName == SetupConstant.{{ question.database }}) {{% with counter=1 %}{% for field in file.fields %}{% if field.database_value == question.database %}
-      items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ counter }}"));{% with counter=counter|add:1 %}{% endwith %}{% endif %}{% endfor %}{% endwith %}
+    
+    // Using if-else chain for model name checking
+    if (false) { /* placeholder for first condition */ }
+{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+    else if (modelName == SetupConstant.{{ question.database }}) {
+      // Setup data for {{ question.database }}{% regroup file.fields|dictsort:"database_value" by database_value as fields_by_database %}{% for db_group in fields_by_database %}{% if db_group.grouper == question.database %}{% for field in db_group.list %}
+      items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ forloop.counter }}"));{% endfor %}{% endif %}{% endfor %}
     }{% endif %}{% endfor %}{% endif %}{% endfor %}
     
     return items;
