@@ -1,46 +1,96 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8">Database Generation Results</h1>
-        
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Generated Files</h2>
-            
-            <!-- App Info -->
-            <div class="mb-6">
-                <p class="text-gray-700">
-                    <span class="font-medium">App Name:</span> {{ app_name }}
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Page Title Section -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                    Generation Complete
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-300">
+                    Your Flutter application files have been generated successfully
                 </p>
             </div>
             
-            <!-- Generated Files List -->
-            <div class="space-y-4">
-                {% for file in generated_files %}
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="font-medium text-gray-800">{{ file.sheet }}</h3>
-                            <p class="text-sm text-gray-600">Class Name: {{ file.class_name }}</p>
+            <!-- Main Results Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+                <!-- App Info Section -->
+                <div class="mb-8">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">App Details</h2>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-gray-700 rounded-xl p-6">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <p class="text-lg text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">App Name:</span> 
+                                <span class="ml-2 text-blue-600 dark:text-blue-400">{{ app_name }}</span>
+                            </p>
                         </div>
-                        <span class="text-green-600">✓ Generated</span>
                     </div>
                 </div>
-                {% endfor %}
+
+                <!-- Generated Files Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Generated Files</h2>
+                    </div>
+
+                    <div class="grid gap-4">
+                        {% for file in generated_files %}
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 border border-green-200 dark:border-gray-500 rounded-xl p-6 transform transition-all duration-300 hover:scale-[1.01]">
+                            <div class="flex justify-between items-center">
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="w-5 h-5 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <h3 class="text-lg font-medium text-gray-800 dark:text-white">{{ file.sheet }}</h3>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center space-x-1">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
+                                        </svg>
+                                        <span>Class Name: {{ file.class_name }}</span>
+                                    </p>
+                                </div>
+                                <div class="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span class="font-medium">Generated</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4 pt-8">
+                    <button onclick="window.history.back()" 
+                            class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300">
+                        Back
+                    </button>
+                    <a href="{% url 'excel_converter:preview' %}" 
+                       class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300 inline-flex items-center space-x-2">
+                        <span>Continue to Preview</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                </div>
             </div>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-4">
-            <button onclick="window.history.back()" 
-                    class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-                Back
-            </button>
-            <a href="{% url 'excel_converter:preview' %}" 
-               class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 inline-block">
-                Continue to Preview
-            </a>
         </div>
     </div>
 </div>

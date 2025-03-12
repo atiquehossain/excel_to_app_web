@@ -3,230 +3,263 @@
 
 {% block content %}
 <!-- Main Form Container -->
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto text-center">
-        <!-- Page Title Section -->
-        <h1 class="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-            Excel to Dart Code Generator
-        </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Convert your Excel spreadsheet data into Dart/Flutter code
-        </p>
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Page Title Section -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                    Excel to Dart Code Generator
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-300">
+                    Transform your Excel data into powerful Flutter applications
+                </p>
+            </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Upload Excel File</h2>
-            <form id="uploadForm" class="space-y-4">
-                {% csrf_token %}
-                
-                <!-- Step 1: File Upload -->
-                <div id="fileUploadSection">
-                    {{ form.file|as_crispy_field }}
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Supported formats: .xlsx, .xls, .csv</p>
-                    <button type="button" id="getSheets" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2">
-                        Get Sheets
-                    </button>
-                </div>
-                
-                <!-- Step 2: Sheet Selection -->
-                <div id="sheetSelectionSection" class="hidden">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Sheets to Process</label>
-                        <div id="sheetCheckboxes" class="max-h-40 overflow-y-auto border rounded-lg p-3 dark:border-gray-600 dark:bg-gray-700">
-                            <!-- Sheet checkboxes will be added dynamically -->
-                        </div>
+            <!-- Progress Steps -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1">
+                        <div id="step1Indicator" class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold mx-auto">1</div>
+                        <p class="text-center mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">Upload File</p>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold" for="ideal_sheet">Select Ideal Sheet</label>
-                        <select id="ideal_sheet" name="ideal_sheet" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                            <option value="">-- Select an ideal sheet --</option>
-                            <!-- Ideal sheet options will be added dynamically based on selected sheets -->
-                        </select>
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="h-1 w-full bg-gray-200 dark:bg-gray-700"></div>
+                        </div>
+                        <div id="step2Indicator" class="relative w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-white flex items-center justify-center font-semibold mx-auto">2</div>
+                        <p class="text-center mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">Select Sheets</p>
                     </div>
-                    <button type="button" id="getColumnsBtn" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2 hidden">
-                        Get Columns
-                    </button>
-                    <button type="button" id="backBtn" class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2">
-                        Back to File Upload
-                    </button>
+                    <div class="flex-1">
+                        <div id="step3Indicator" class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-white flex items-center justify-center font-semibold mx-auto">3</div>
+                        <p class="text-center mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">Configure</p>
+                    </div>
                 </div>
-                
-                <!-- Step 3: Column Selection -->
-                <div id="columnSelectionSection" class="hidden">
-                    <div class="space-y-4">
-                        <!-- Database Column Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Database Column</label>
-                            <select id="database_column" name="database_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                <option value="">-- Select a column --</option>
-                            </select>
-                        </div>
+            </div>
 
-                        <!-- English Question Column Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select English Question Column</label>
-                            <select id="question_column" name="question_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                <option value="">-- Select a column --</option>
-                            </select>
-                        </div>
-
-                        <!-- Field Name Column Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Field Name Column</label>
-                            <select id="field_name_column" name="field_name_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                <option value="">-- Select a column --</option>
-                            </select>
-                        </div>
-
-                        <!-- Datatype Column Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Datatype Column</label>
-                            <select id="datatype_column" name="datatype_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                <option value="">-- Select a column --</option>
-                            </select>
-                        </div>
-
-                        <!-- Question Serial Column Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Question Serial Column</label>
-                            <select id="question_serial_column" name="question_serial_column" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                <option value="">-- Select a column --</option>
-                            </select>
-                        </div>
-
-                        <!-- Language Support Selection -->
-                        <div class="mb-4">
-                            <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Does project support multiple languages?</label>
-                            <div class="flex space-x-4">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="language_support" value="yes" class="form-radio text-blue-500">
-                                    <span class="ml-2">Yes</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="language_support" value="no" class="form-radio text-blue-500" checked>
-                                    <span class="ml-2">No</span>
-                                </label>
+            <!-- Main Form Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+                <form id="uploadForm" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Step 1: File Upload -->
+                    <div id="fileUploadSection" class="transition-all duration-300">
+                        <div class="mb-6">
+                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-300">
+                                {{ form.file|as_crispy_field }}
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Drag and drop your Excel file here or click to browse</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Supported formats: .xlsx, .xls, .csv</p>
                             </div>
                         </div>
-
-                        <!-- Language Selection Sections (initially hidden) -->
-                        <div id="languageSelectionSection" class="hidden space-y-4">
-                            <!-- Question Languages Selection -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Question Columns</label>
-                                <div id="questionLanguagesCheckboxes" class="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2 dark:border-gray-600 dark:bg-gray-700">
-                                    <!-- Checkboxes will be added here dynamically -->
-                                </div>
-                            </div>
-
-                            <!-- Field Languages Selection -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">Select Field Columns</label>
-                                <div id="fieldLanguagesCheckboxes" class="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2 dark:border-gray-600 dark:bg-gray-700">
-                                    <!-- Checkboxes will be added here dynamically -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <input type="hidden" id="filename" name="filename" value="">
-                        <div class="flex space-x-4">
-                            <button type="button" id="checkBtn"
-                                    class="flex-1 bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                                Check Selections
-                            </button>
-                            <button type="button" id="previewBtn"
-                                    class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                                Preview Selections
-                            </button>
-                            <!-- <button type="submit" id="generateBtn"
-                                    class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                Generate Code
-                            </button> -->
-                        </div>
-                        <button type="button" id="backToSheetsBtn" class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2">
-                            Back to Sheet Selection
+                        <button type="button" id="getSheets" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300">
+                            Get Sheets
                         </button>
                     </div>
-                </div>
-            </form>
+                    
+                    <!-- Step 2: Sheet Selection -->
+                    <div id="sheetSelectionSection" class="hidden transition-all duration-300">
+                        <div class="mb-6">
+                            <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Select Sheets to Process</label>
+                            <div id="sheetCheckboxes" class="max-h-48 overflow-y-auto border rounded-xl p-4 space-y-2 dark:border-gray-600 dark:bg-gray-700 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                                <!-- Sheet checkboxes will be added dynamically -->
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3" for="ideal_sheet">Select Ideal Sheet</label>
+                            <select id="ideal_sheet" name="ideal_sheet" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                <option value="">-- Select an ideal sheet --</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col space-y-3">
+                            <button type="button" id="getColumnsBtn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300 hidden">
+                                Continue
+                            </button>
+                            <button type="button" id="backBtn" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300">
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Column Selection -->
+                    <div id="columnSelectionSection" class="hidden transition-all duration-300">
+                        <div class="space-y-6">
+                            <!-- Column Selection Groups -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Database Column Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Database Column</label>
+                                    <select id="database_column" name="database_column" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                        <option value="">-- Select a column --</option>
+                                    </select>
+                                </div>
+
+                                <!-- English Question Column Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">English Question Column</label>
+                                    <select id="question_column" name="question_column" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                        <option value="">-- Select a column --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Field Name Column Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Field Name Column</label>
+                                    <select id="field_name_column" name="field_name_column" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                        <option value="">-- Select a column --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Datatype Column Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Datatype Column</label>
+                                    <select id="datatype_column" name="datatype_column" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                        <option value="">-- Select a column --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Question Serial Column Selection -->
+                            <div class="space-y-3">
+                                <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Question Serial Column</label>
+                                <select id="question_serial_column" name="question_serial_column" class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 transition-colors duration-300">
+                                    <option value="">-- Select a column --</option>
+                                </select>
+                            </div>
+
+                            <!-- Language Support Selection -->
+                            <div class="space-y-4">
+                                <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Multiple Language Support</label>
+                                <div class="flex space-x-6">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="language_support" value="yes" class="form-radio text-blue-500 h-5 w-5">
+                                        <span class="ml-2 text-gray-700 dark:text-gray-300">Yes</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="language_support" value="no" class="form-radio text-blue-500 h-5 w-5" checked>
+                                        <span class="ml-2 text-gray-700 dark:text-gray-300">No</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Language Selection Sections -->
+                            <div id="languageSelectionSection" class="hidden space-y-6">
+                                <!-- Question Languages Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Question Columns</label>
+                                    <div id="questionLanguagesCheckboxes" class="max-h-48 overflow-y-auto border rounded-xl p-4 space-y-2 dark:border-gray-600 dark:bg-gray-700 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                                    </div>
+                                </div>
+
+                                <!-- Field Languages Selection -->
+                                <div class="space-y-3">
+                                    <label class="block text-lg font-semibold text-gray-700 dark:text-gray-300">Field Columns</label>
+                                    <div id="fieldLanguagesCheckboxes" class="max-h-48 overflow-y-auto border rounded-xl p-4 space-y-2 dark:border-gray-600 dark:bg-gray-700 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="filename" name="filename" value="">
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col space-y-3">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button type="button" id="checkBtn"
+                                            class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 px-6 rounded-xl font-medium hover:from-yellow-600 hover:to-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300">
+                                        Check Selections
+                                    </button>
+                                    <button type="button" id="previewBtn"
+                                            class="bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 px-6 rounded-xl font-medium hover:from-purple-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300">
+                                        Preview Selections
+                                    </button>
+                                </div>
+                                <button type="button" id="backToSheetsBtn" 
+                                        class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300">
+                                    Back
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p class="mt-4 text-gray-700 dark:text-gray-300">Processing your file...</p>
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+        <p class="mt-6 text-lg font-medium text-gray-700 dark:text-gray-300">Processing your file...</p>
     </div>
 </div>
 
 <!-- Preview Modal -->
-<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-3/4 max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Selected Options Preview</h2>
-            <button id="closePreviewBtn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-3/4 max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Selected Options Preview</h2>
+            <button id="closePreviewBtn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-300">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
-        <div class="space-y-6">
+        <div class="space-y-8">
             <!-- Sheet Selection -->
-            <div class="border-b dark:border-gray-700 pb-4">
-                <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Selected Sheets</h3>
-                <div id="previewSheets" class="text-gray-700 dark:text-gray-300"></div>
-                <div class="mt-2">
-                    <span class="font-medium">Ideal Sheet: </span>
-                    <span id="previewIdealSheet" class="text-gray-700"></span>
+            <div class="border-b dark:border-gray-700 pb-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Selected Sheets</h3>
+                <div id="previewSheets" class="text-gray-700 dark:text-gray-300 space-y-2"></div>
+                <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                    <span class="font-medium text-gray-900 dark:text-white">Ideal Sheet: </span>
+                    <span id="previewIdealSheet" class="text-gray-700 dark:text-gray-300"></span>
                 </div>
             </div>
 
             <!-- Column Selections -->
-            <div class="border-b dark:border-gray-700 pb-4">
-                <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Selected Columns</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Database Column:</p>
+            <div class="border-b dark:border-gray-700 pb-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Selected Columns</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Database Column</p>
                         <p id="previewDatabaseColumn" class="text-gray-700 dark:text-gray-300"></p>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Question Column:</p>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Question Column</p>
                         <p id="previewQuestionColumn" class="text-gray-700 dark:text-gray-300"></p>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Field Name Column:</p>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Field Name Column</p>
                         <p id="previewFieldNameColumn" class="text-gray-700 dark:text-gray-300"></p>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Datatype Column:</p>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Datatype Column</p>
                         <p id="previewDatatypeColumn" class="text-gray-700 dark:text-gray-300"></p>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Question Serial Column:</p>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Question Serial Column</p>
                         <p id="previewQuestionSerialColumn" class="text-gray-700 dark:text-gray-300"></p>
                     </div>
                 </div>
             </div>
 
             <!-- Language Support -->
-            <div id="previewLanguageSection" class="border-b dark:border-gray-700 pb-4 hidden">
-                <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Language Support</h3>
-                <div class="space-y-4">
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Selected Question Columns:</p>
-                        <ul id="previewQuestionLanguages" class="list-disc list-inside text-gray-700 dark:text-gray-300"></ul>
+            <div id="previewLanguageSection" class="border-b dark:border-gray-700 pb-6 hidden">
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Language Support</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Selected Question Columns</p>
+                        <ul id="previewQuestionLanguages" class="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1"></ul>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Selected Field Columns:</p>
-                        <ul id="previewFieldLanguages" class="list-disc list-inside text-gray-700 dark:text-gray-300"></ul>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <p class="font-medium text-gray-900 dark:text-white mb-2">Selected Field Columns</p>
+                        <ul id="previewFieldLanguages" class="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1"></ul>
                     </div>
                 </div>
             </div>
 
             <!-- Validation Results -->
-            <div id="validationResultsSection" class="border-b dark:border-gray-700 pb-4 hidden">
-                <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Validation Results</h3>
+            <div id="validationResultsSection" class="border-b dark:border-gray-700 pb-6 hidden">
+                <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Validation Results</h3>
                 <div id="validationResults" class="space-y-4">
                     <!-- Results will be populated dynamically -->
                 </div>

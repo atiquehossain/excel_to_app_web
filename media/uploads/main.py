@@ -68,7 +68,7 @@ def process_combined_projects(file_path, sheet_name):
     print(f"Cleaned columns: {df.columns}")
 
     # Ensure required columns for Project 2
-    required_columns = ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala', 'data_type', 'database']
+    required_columns = ['field_names_in_english', 'data_type', 'database']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing columns for Project 2: {', '.join(missing_columns)}")
@@ -82,11 +82,10 @@ def process_combined_projects(file_path, sheet_name):
     df['database'] = df['database'].fillna('').astype(str).replace('nan', '').ffill()
 
     # Filter dropdown and multiple-choice rows
-    filtered_data = df[df['data_type'].str.strip().str.lower().isin(['dropdown', 'multiple choice', 'radio'])].copy()
+    filtered_data = df[df['data_type'].str.strip().str.lower().isin(['dropdown', 'multiple choice', 'radio', 'yes/no'])].copy()
 
     # Ensure all relevant columns are strings and clean
-    for col in ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala']:
-        filtered_data[col] = filtered_data[col].fillna('').astype(str).apply(lambda x: x.strip())
+    filtered_data['field_names_in_english'] = filtered_data['field_names_in_english'].fillna('').astype(str).apply(lambda x: x.strip())
 
     # Flatten field names in English
     filtered_data['field_names_in_english'] = filtered_data['field_names_in_english'].fillna('').astype(str).apply(lambda x: x.strip())
@@ -100,28 +99,23 @@ def process_combined_projects(file_path, sheet_name):
     grouped_data = flattened_data.groupby('database')['field_names_in_english'].apply(list).to_dict()
 
     # Generate localization data
-    localization_data = {lang: {} for lang in ['English', 'Tamil', 'Sinhala']}
+    localization_data = {'English': {}}
     today_date = datetime.now().strftime('%Y-%m-%d')
 
     for _, row in flattened_data.iterrows():
         english_name = str(row['field_names_in_english']).strip()
-        tamil_name = str(row['field_names_in_tamil']).strip()
-        sinhala_name = str(row['field_names_in_sinhala']).strip()
-        database_name = sanitize_key(str(row['database']).strip())  # Sanitize the database name
+        database_name = sanitize_key(str(row['database']).strip())  # Sanitize the database name    
         sanitized_key = f"{sanitize_key(english_name)}_{database_name}"  # Append database to the key
 
         localization_data['English'][sanitized_key] = english_name
-        localization_data['Tamil'][sanitized_key] = tamil_name
-        localization_data['Sinhala'][sanitized_key] = sinhala_name
 
     # Generate localization files field type
-    for lang, file_path in {'English': 'en_field.dart', 'Tamil': 'ta_field.dart', 'Sinhala': 'si_field.dart'}.items():
-        content = f"/// {sheet_name} localization file - {today_date}\n\n"
-        content += "class Localization {\n"
-        for key, value in localization_data[lang].items():
-            content += f"  String get {key}_ufind_v2 => '{value}';\n"
-        content += "}\n"
-        write_dart_file(file_path, content)
+    content = f"/// {sheet_name} localization file - {today_date}\n\n"
+    content += "class Localization {\n"
+    for key, value in localization_data['English'].items():
+        content += f"  String get {key}_ufind_v2 => '{value}';\n"
+    content += "}\n"
+    write_dart_file('en_field.dart', content)
 
     # Generate keys file field types
     file_path = "field_keys.dart"
@@ -148,17 +142,40 @@ def process_combined_projects(file_path, sheet_name):
     write_dart_file("setupData.dart", dart_code)
 
     print("Processing completed successfully!")
-    print("Files generated: en_field.dart, ta_field.dart, si_field.dart, field_keys.dart, setupData.dart")
+    print("Files generated: en_field.dart, field_keys.dart, setupData.dart")
 
 # Main execution
 if __name__ == "__main__":
     try:   
-        file_path = 'U_find_31_12_24.xlsx'
+        # Get the uploaded file path from the media/uploads directory
+        upload_dir = os.path.join('media', 'uploads')
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+            
+        # Get list of Excel files in the upload directory
+        excel_files = [f for f in os.listdir(upload_dir) if f.endswith(('.xlsx', '.xls'))]
         
-        # Check if the file exists in the media/uploads directory
-        upload_path = os.path.join('media', 'uploads', file_path)
-        if os.path.exists(upload_path):
-            file_path = upload_path
+        if not excel_files:
+            raise ValueError("No Excel files found in the uploads directory.")
+        
+        # Display available Excel files
+        print("\nAvailable Excel files:")
+        for i, file in enumerate(excel_files, 1):
+            print(f"{i}. {file}")
+        
+        # Ask user to select a file
+        while True:
+            try:
+                selection = input("\nEnter the number of the Excel file you want to work with: ")
+                file_index = int(selection) - 1
+                if 0 <= file_index < len(excel_files):
+                    file_path = os.path.join(upload_dir, excel_files[file_index])
+                    print(f"\nSelected file: {excel_files[file_index]}")
+                    break
+                else:
+                    print(f"Invalid selection. Please enter a number between 1 and {len(excel_files)}.")
+            except ValueError:
+                print("Please enter a valid number.")
         
         # Get all sheet names
         sheet_names = ExcelProcessor.get_sheet_names(file_path)

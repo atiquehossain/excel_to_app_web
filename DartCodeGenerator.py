@@ -13,6 +13,7 @@ class DartCodeGenerator:
         "Dropdown": "AppConstant.FieldType_dropdown",
         "Multiple choice": "AppConstant.FieldType_multiple_choice",
         "radio": "AppConstant.FieldType_radio",
+        "yes/no": "AppConstant.FieldType_radio",
         "Number": "AppConstant.FieldType_EditText",
         "Text": "AppConstant.FieldType_EditText",
         "Image": "AppConstant.FieldType_Image"
@@ -22,6 +23,7 @@ class DartCodeGenerator:
         "Dropdown": "String",
         "Multiple choice": "String",
         "radio": "int",
+        "yes/no": "int",
         "Number": "double",
         "Text": "String",
         "Image": "String",
@@ -31,7 +33,7 @@ class DartCodeGenerator:
         """Initializes the DartCodeGenerator instance with necessary parameters and folder setup."""
         self.class_name = class_name
         self.df = df
-        self.localization_data = {"Tamil": {}, "Sinhala": {}, "English": {}}
+        self.localization_data = {"English": {}}
         self.dart_widgets = []
         self.model_fields = []
         self.constructor_params = []
@@ -80,6 +82,8 @@ class DartCodeGenerator:
         elif field_type == 'AppConstant.FieldType_dropdown':
             return f"SetupData.getDropDownItems(context, SetupConstant.{model}_ufind_v2)"
         elif field_type == 'AppConstant.FieldType_radio':
+            if model.lower() == 'yes/no':
+                return "['Yes', 'No']"
             return f"SetupData.getCheklistItemsWithoutFuture(context, SetupConstant.{model}_ufind_v2)"
         else:
             return "null" 
@@ -125,10 +129,8 @@ class DartCodeGenerator:
             self.to_string.append(f"      '{field_name}: ${{this.{field_name}}}\\n' +")
             
             # Add to localization data
-            for lang in ['Tamil', 'Sinhala', 'English']:
-                lang_key = f"questions_in_{lang.lower()}"
-                if lang_key in row_dict and row_dict[lang_key]:
-                    self.localization_data[lang][field_name] = row_dict[lang_key]
+            if 'questions_in_english' in row_dict and row_dict['questions_in_english']:
+                self.localization_data['English'][field_name] = row_dict['questions_in_english']
             
             # Generate widget template
             question_key = self._sanitize_string(question_english)

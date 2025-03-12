@@ -1,81 +1,153 @@
 import pandas as pd
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
+from datetime import datetime
+from .main import process_combined_projects
+from .DartCodeGenerator import DartCodeGenerator
 
 class ExcelConverterView:
     """Main view for handling Excel file processing and code generation"""
     
+    @csrf_exempt
+    @require_http_methods(["POST"])
     def handle_upload(self, request):
         """
-        Operation: File Upload (Step 1)
-        Location: When user clicks "Get Sheets" button
-        Purpose: 
-        - Receives Excel file from user
-        - Validates file format (.xlsx, .xls, .csv)
-        - Processes file to extract available sheets
-        - Returns list of sheets to frontend
-        """
-        # Validates file
-        # Extracts sheets
-        # Returns sheet list
-        
-    def process_sheets(self, request):
-        """
-        Operation: Sheet Processing (Step 2)
-        Location: When user selects sheets and clicks "Get Columns"
-        Purpose:
-        - Gets selected sheets from user
-        - Reads sheet contents
-        - Identifies column headers
-        - Returns available columns for mapping
+        Handle Excel file upload and return available sheets
         """
         try:
-            # Define expected column mappings
-            COLUMN_MAPPINGS = {
-                'database_name': ['database name', 'database_name', 'databasename', 'db_name'],
-                'questions_in_english': ['questions in english', 'questions_in_english', 'question_english'],
-                'datatype': ['datatype', 'data_type', 'type'],
-                'field_names_in_english': ['field names in english', 'field_names_in_english', 'field_name'],
-                'question_sr': ['question sr', 'question_sr', 'sr_no', 'serial']
-            }
-
-            # Get the DataFrame from Excel
-            df = pd.read_excel(file_path)
+            if 'file' not in request.FILES:
+                return JsonResponse({'error': 'No file uploaded'}, status=400)
             
-            # Try to match columns using various possible names
-            for expected_col, possible_names in COLUMN_MAPPINGS.items():
-                found_col = None
-                for name in possible_names:
-                    if name in df.columns:
-                        found_col = name
-                        break
-                
-                if not found_col:
-                    raise ValueError(f"Column '{expected_col}' not found. Available columns: {', '.join(df.columns)}")
-                
-                # Rename column to standard name if needed
-                if found_col != expected_col:
-                    df = df.rename(columns={found_col: expected_col})
-
-            # Continue with processing...
-            return df
-
+            file = request.FILES['file']
+            if not file.name.endswith(('.xlsx', '.xls')):
+                return JsonResponse({'error': 'Invalid file type. Please upload an Excel file.'}, status=400)
+            
+            # Save the file temporarily
+            upload_dir = os.path.join('media', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, file.name)
+            
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+            
+            # Get sheet names
+            df = pd.read_excel(file_path)
+            sheets = df.sheet_names
+            
+            return JsonResponse({
+                'success': True,
+                'sheets': sheets,
+                'message': f'Successfully uploaded {file.name}'
+            })
+            
         except Exception as e:
-            raise ValueError(f"Error processing Excel file: {str(e)}")
+            return JsonResponse({
+                'error': str(e),
+                'message': 'Error processing file'
+            }, status=500)
 
-    def generate_code(self, request):
+    @csrf_exempt
+    @require_http_methods(["POST"])
+    def process_sheet(self, request):
         """
-        Operation: Code Generation (Final Step)
-        Location: When user clicks "Generate Code" after validation
-        Purpose:
-        - Takes all user selections (sheets, columns, mappings)
-        - Generates Dart model classes
-        - Creates language files if multilingual
-        - Produces Flutter UI widgets
-        - Returns generated code files
+        Process selected sheet and generate code
         """
-        # Maps columns to fields
-        # Generates Dart classes
-        # Creates language files
-        # Returns generated code
+        try:
+            data = json.loads(request.body)
+            sheet_name = data.get('sheet')
+            
+            if not sheet_name:
+                return JsonResponse({'error': 'No sheet selected'}, status=400)
+            
+            # Get the latest uploaded file
+            upload_dir = os.path.join('media', 'uploads')
+            excel_files = [f for f in os.listdir(upload_dir) if f.endswith(('.xlsx', '.xls'))]
+            
+            if not excel_files:
+                return JsonResponse({'error': 'No Excel file found'}, status=400)
+            
+            latest_file = max(excel_files, key=lambda x: os.path.getctime(os.path.join(upload_dir, x)))
+            file_path = os.path.join(upload_dir, latest_file)
+            
+            # Process the sheet
+            process_combined_projects(file_path, sheet_name)
+            
+            # Get generated files
+            generated_files = []
+            output_dir = os.path.join('generated_code')
+            for file in os.listdir(output_dir):
+                if file.endswith('.dart'):
+                    generated_files.append({
+                        'name': file,
+                        'url': f'/download/{file}'
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'files': generated_files,
+                'message': f'Successfully processed sheet: {sheet_name}'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'message': 'Error processing sheet'
+            }, status=500)
+
+    @require_http_methods(["GET"])
+    def download_file(self, request, filename):
+        """
+        Handle file downloads
+        """
+        try:
+            file_path = os.path.join('generated_code', filename)
+            if not os.path.exists(file_path):
+                return JsonResponse({'error': 'File not found'}, status=404)
+            
+            with open(file_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/octet-stream')
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+                
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'message': 'Error downloading file'
+            }, status=500)
+
+    @require_http_methods(["GET"])
+    def download_all(self, request):
+        """
+        Handle downloading all generated files as a zip
+        """
+        try:
+            import zipfile
+            from io import BytesIO
+            
+            # Create a zip file in memory
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                output_dir = os.path.join('generated_code')
+                for file in os.listdir(output_dir):
+                    if file.endswith('.dart'):
+                        file_path = os.path.join(output_dir, file)
+                        zip_file.write(file_path, file)
+            
+            # Prepare the response
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer, content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="generated_code.zip"'
+            return response
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'message': 'Error creating zip file'
+            }, status=500)
 
 class CodePreviewView:
     """Preview and validation handler"""

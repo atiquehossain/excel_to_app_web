@@ -2,126 +2,144 @@
 {% load custom_filters %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 text-gray-900 dark:text-gray-100">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-gray-100">Code Preview</h1>
-        
-        <!-- Add this near the top of your content, maybe in the header area -->
-        <div class="flex justify-end mb-4">
-            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600">
-                <!-- Sun icon -->
-                <svg id="light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
-                </svg>
-                <!-- Moon icon -->
-                <svg id="dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
-                </svg>
-            </button>
-        </div>
-        
-        <!-- App Info -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Generated App Details</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <p class="font-medium">App Name:</p>
-                    <p class="text-gray-700 dark:text-gray-300">{{ app_name }}</p>
-                </div>
-                <div>
-                    <p class="font-medium">Ideal Sheet:</p>
-                    <p class="text-gray-700 dark:text-gray-300">{{ ideal_sheet }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tab Navigation -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-            <div class="border-b border-gray-200 mb-4">
-                <nav class="flex space-x-4" aria-label="Tabs">
-                    <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-100 dark:bg-gray-700 border-b-2 border-blue-500"
-                        onclick="showPreviewTab('models')"
-                        id="models-tab"
-                    >
-                        Models
-                    </button>
-                    <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
-                        onclick="showPreviewTab('language-keys')"
-                        id="language-keys-tab"
-                    >
-                        Language Keys
-                    </button>
-                    <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
-                        onclick="showPreviewTab('key-values')"
-                        id="key-values-tab"
-                    >
-                        Key Values
-                    </button>
-                    <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
-                        onclick="showPreviewTab('setup-data')"
-                        id="setup-data-tab"
-                    >
-                        Setup Data
-                    </button>
-                    <button 
-                        class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100"
-                        onclick="showPreviewTab('ui-code')"
-                        id="ui-code-tab"
-                    >
-                        UI Code
-                    </button>
-                </nav>
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header Section -->
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                    Code Preview
+                </h1>
+                
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="p-3 rounded-full bg-white dark:bg-gray-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <svg id="light-icon" class="w-6 h-6 hidden text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
+                    </svg>
+                    <svg id="dark-icon" class="w-6 h-6 hidden text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
             </div>
             
-            <!-- Models Tab Content -->
-            <div id="models-content" class="tab-content">
-                <div class="mb-4">
-                    <h2 class="text-xl font-semibold">Generated Models</h2>
+            <!-- App Info Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 transform hover:scale-[1.02] transition-all duration-300">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Generated App Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
+                        <p class="font-medium text-gray-600 dark:text-gray-300 mb-2">App Name</p>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">{{ app_name }}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
+                        <p class="font-medium text-gray-600 dark:text-gray-300 mb-2">Ideal Sheet</p>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">{{ ideal_sheet }}</p>
+                    </div>
                 </div>
-                
-                <!-- Model Files Navigation -->
-                <div class="border-b border-gray-200 mb-4">
-                    <nav class="flex space-x-4" aria-label="Model Tabs">
-                        {% for file in generated_files %}
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-8">
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="flex flex-wrap -mb-px space-x-1" aria-label="Tabs">
+                        <!-- Tab buttons with enhanced styling -->
                         <button 
-                            class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
-                                   {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
-                            onclick="showModelTab('{{ file.class_name }}')"
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('home-code')"
+                            id="home-code-tab"
                         >
-                            {{ file.sheet }}
+                            Home Page
                         </button>
-                        {% endfor %}
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('models')"
+                            id="models-tab"
+                        >
+                            Models
+                        </button>
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('language-keys')"
+                            id="language-keys-tab"
+                        >
+                            Language Keys
+                        </button>
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('key-values')"
+                            id="key-values-tab"
+                        >
+                            Key Values
+                        </button>
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('setup-data')"
+                            id="setup-data-tab"
+                        >
+                            Setup Data
+                        </button>
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('ui-code')"
+                            id="ui-code-tab"
+                        >
+                            UI Code
+                        </button>
+                        <button 
+                            class="px-6 py-4 text-sm font-medium rounded-t-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            onclick="showPreviewTab('list-code')"
+                            id="list-code-tab"
+                        >
+                            List Page
+                        </button>
                     </nav>
                 </div>
                 
-                <!-- Model Code Content -->
-                {% for file in generated_files %}
-                <div id="model-{{ file.class_name }}" 
-                     class="model-content {% if not forloop.first %}hidden{% endif %}">
-                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                            Copy
-                        </button>
-                        <pre class="text-white"><code>{{ file.generated_code|default:"// Code will be generated here" }}</code></pre>
+                <!-- Tab Content Container -->
+                <div class="mt-6">
+                    <!-- Keep existing tab content divs but add transitions -->
+                    <div id="models-content" class="tab-content transition-opacity duration-300">
+                        <div class="mb-4">
+                            <h2 class="text-xl font-semibold">Generated Models</h2>
+                        </div>
+                        
+                        <!-- Model Files Navigation -->
+                        <div class="border-b border-gray-200 mb-4">
+                            <nav class="flex space-x-4" aria-label="Model Tabs">
+                                {% for file in generated_files %}
+                                <button 
+                                    class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
+                                           {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
+                                    onclick="showModelTab('{{ file.class_name }}')"
+                                >
+                                    {{ file.sheet }}
+                                </button>
+                                {% endfor %}
+                            </nav>
+                        </div>
+                        
+                        <!-- Model Code Content -->
+                        {% for file in generated_files %}
+                        <div id="model-{{ file.class_name }}" 
+                             class="model-content {% if not forloop.first %}hidden{% endif %}">
+                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                    Copy
+                                </button>
+                                <pre class="text-white"><code>{{ file.generated_code|default:"// Code will be generated here" }}</code></pre>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Language Keys Tab Content -->
-            <div id="language-keys-content" class="tab-content hidden">
-                <div class="mb-4">
-                    <h2 class="text-xl font-semibold">Language Keys</h2>
-                </div>
-                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                        Copy
-                    </button>
-                    <pre class="text-white"><code>abstract class Languages {
+                    
+                    <div id="language-keys-content" class="tab-content hidden transition-opacity duration-300">
+                        <div class="mb-4">
+                            <h2 class="text-xl font-semibold">Language Keys</h2>
+                        </div>
+                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                    Copy
+                                </button>
+                                <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
   {% if file.questions %}
@@ -138,19 +156,18 @@
   {% endif %}
 {% endfor %}
 }</code></pre>
-                </div>
-            </div>
-            
-            <!-- Key Values Tab Content -->
-            <div id="key-values-content" class="tab-content hidden">
-                <div class="mb-4">
-                    <h2 class="text-xl font-semibold">Key Value Pairs</h2>
-                </div>
-                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                        Copy
-                    </button>
-                    <pre class="text-white"><code>abstract class Languages {
+                            </div>
+                    </div>
+                    
+                    <div id="key-values-content" class="tab-content hidden transition-opacity duration-300">
+                        <div class="mb-4">
+                            <h2 class="text-xl font-semibold">Key Value Pairs</h2>
+                        </div>
+                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                    Copy
+                                </button>
+                                <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
   {% if file.questions %}
@@ -168,19 +185,18 @@
 
 {% endfor %}
 }</code></pre>
-                </div>
-            </div>
-            
-            <!-- Setup Data Tab Content -->
-            <div id="setup-data-content" class="tab-content hidden">
-                <div class="mb-4">
-                    <h2 class="text-xl font-semibold">Setup Data</h2>
-                </div>
-                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                        Copy
-                    </button>
-                    <pre class="text-white"><code>class SetupConstant {
+                            </div>
+                    </div>
+                    
+                    <div id="setup-data-content" class="tab-content hidden transition-opacity duration-300">
+                        <div class="mb-4">
+                            <h2 class="text-xl font-semibold">Setup Data</h2>
+                        </div>
+                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                    Copy
+                                </button>
+                                <pre class="text-white"><code>class SetupConstant {
 {% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
   static const String {{ question.database }} = "{{ question.database }}";{% endif %}{% endfor %}{% endif %}{% endfor %}
 }
@@ -207,39 +223,38 @@ class SetupData {
     return _getData(context, modelName);
   }
 }</code></pre>
-                </div>
-            </div>
-            
-            <!-- UI Code Tab Content -->
-            <div id="ui-code-content" class="tab-content hidden">
-                <div class="mb-4">
-                    <h2 class="text-xl font-semibold">UI Implementation</h2>
-                </div>
-                
-                <!-- UI Files Navigation -->
-                <div class="border-b border-gray-200 mb-4">
-                    <nav class="flex space-x-4" aria-label="UI Tabs">
+                            </div>
+                    </div>
+                    
+                    <div id="ui-code-content" class="tab-content hidden transition-opacity duration-300">
+                        <div class="mb-4">
+                            <h2 class="text-xl font-semibold">UI Implementation</h2>
+                        </div>
+                        
+                        <!-- UI Files Navigation -->
+                        <div class="border-b border-gray-200 mb-4">
+                            <nav class="flex space-x-4" aria-label="UI Tabs">
+                                {% for file in generated_files %}
+                                <button 
+                                    class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
+                                           {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
+                                    onclick="showUITab('{{ file.class_name }}')"
+                                >
+                                    {{ file.sheet }}
+                                </button>
+                                {% endfor %}
+                            </nav>
+                        </div>
+                        
+                        <!-- UI Code Content -->
                         {% for file in generated_files %}
-                        <button 
-                            class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
-                                   {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
-                            onclick="showUITab('{{ file.class_name }}')"
-                        >
-                            {{ file.sheet }}
-                        </button>
-                        {% endfor %}
-                    </nav>
-                </div>
-                
-                <!-- UI Code Content -->
-                {% for file in generated_files %}
-                <div id="ui-{{ file.class_name }}" 
-                     class="ui-content {% if not forloop.first %}hidden{% endif %}">
-                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                            Copy
-                        </button>
-                        <pre class="text-white"><code>import 'package:flutter/material.dart';
+                        <div id="ui-{{ file.class_name }}" 
+                             class="ui-content {% if not forloop.first %}hidden{% endif %}">
+                            <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                    Copy
+                                </button>
+                                <pre class="text-white"><code>import 'package:flutter/material.dart';
 class {{ file.class_name }}UI extends StatefulWidget {
   @override
   _{{ file.class_name }}UIState createState() => _{{ file.class_name }}UIState();
@@ -490,22 +505,213 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
     }
   }
 </code></pre>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div id="list-code-content" class="tab-content hidden transition-opacity duration-300">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">List Page Implementation</h2>
+                </div>
+                
+                <!-- List Page Files Navigation -->
+                <div class="border-b border-gray-200 mb-4">
+                    <nav class="flex space-x-4" aria-label="List Page Tabs">
+                        {% for file in generated_files %}
+                        <button 
+                            class="px-3 py-2 text-sm font-medium rounded-t-lg hover:bg-gray-100 
+                                   {% if forloop.first %}bg-gray-100 border-b-2 border-blue-500{% endif %}"
+                            onclick="showListTab('{{ file.class_name }}')"
+                        >
+                            {{ file.sheet }}
+                        </button>
+                        {% endfor %}
+                    </nav>
+                </div>
+                
+                <!-- List Page Code Content -->
+                {% for file in generated_files %}
+                <div id="list-{{ file.class_name }}" 
+                     class="list-content {% if not forloop.first %}hidden{% endif %}">
+                    <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                            Copy
+                        </button>
+                        <pre class="text-white"><code>import 'package:flutter/material.dart';
+
+class {{ file.class_name }}ListPage extends StatelessWidget {
+  final List<{{ file.class_name }}> {{ file.class_name|lower }}List;
+
+  const {{ file.class_name }}ListPage({
+    Key? key,
+    required this.{{ file.class_name|lower }}List,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('{{ file.class_name }} List'),
+      ),
+      body: ListView.builder(
+        itemCount: {{ file.class_name|lower }}List.length,
+        itemBuilder: (context, index) {
+          {{ file.class_name }} {{ file.class_name|lower }} = {{ file.class_name|lower }}List[index];
+
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            elevation: 5,
+            child: ListTile(
+              title: Text({{ file.class_name|lower }}.{% if file.fields %}{{ file.fields.0.database }}{% else %}id{% endif %}),
+              subtitle: Text(
+                {% if file.fields|length > 1 %}'{{ file.fields.1.field }}: \${{ '{' }}{{ file.class_name|lower }}.{{ file.fields.1.database }}{{ '}' }}\n{{ file.fields.2.field }}: \${{ '{' }}{{ file.class_name|lower }}.{{ file.fields.2.database }}{{ '}' }}'{% else %}'No additional fields'{% endif %}
+              ),
+              trailing: Icon(Icons.arrow_forward),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => {{ file.class_name }}UI(),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => {{ file.class_name }}UI(),
+            ),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}</code></pre>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-4">
-            <button onclick="window.history.back()" 
-                    class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-                Back
-            </button>
-            <button onclick="downloadAll()" 
-                    class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                Download All Files
-            </button>
+
+            <div id="home-code-content" class="tab-content hidden transition-opacity duration-300">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Home Page Implementation</h2>
+                </div>
+                
+                <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
+                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                        Copy
+                    </button>
+                    <pre class="text-white"><code>import 'package:flutter/material.dart';
+
+class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        children: [
+          {% for file in generated_files %}
+          HorizontalCard(
+            icon: Icons.event,
+            title: '{{ file.class_name }}ListPage',
+            color: Colors.purple,
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => {{ file.class_name }}ListPage()));
+            },
+          ),
+          SizedBox(height: 20),
+          {% endfor %}
+        ],
+      ),
+    );
+  }
+}
+
+class HorizontalCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const HorizontalCard({
+    Key? key,
+    required this.icon,
+    required this.title,
+    required this.color,
+    this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap, // Fixed: Changed from '() => onTap' to just 'onTap'
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Text Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[800],
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+              ),
+            ),
+            // Chevron with Background
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}</code></pre>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -544,9 +750,9 @@ function showModelTab(className) {
 }
 
 function downloadAll() {
-    const files = {{ generated_files|safe }};
-    const fileNames = files.map(f => f.class_name + '.dart');
-    const url = `{% url 'excel_converter:download_all' %}?files=${encodeURIComponent(JSON.stringify(fileNames))}`;
+    var files = JSON.parse('{{ generated_files|safe|escapejs }}');
+    var fileNames = files.map(function(f) { return f.class_name + '.dart'; });
+    var url = "{% url 'excel_converter:download_all' %}?files=" + encodeURIComponent(JSON.stringify(fileNames));
     window.location.href = url;
 }
 
@@ -566,30 +772,43 @@ function showUITab(className) {
     event.currentTarget.classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
 }
 
+function showListTab(className) {
+    // Hide all list content
+    document.querySelectorAll('.list-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Show selected list content
+    document.getElementById(`list-${className}`).classList.remove('hidden');
+    
+    // Update list tab button styles
+    document.querySelectorAll('nav[aria-label="List Page Tabs"] button').forEach(button => {
+        button.classList.remove('bg-gray-100', 'border-b-2', 'border-blue-500');
+    });
+    event.currentTarget.classList.add('bg-gray-100', 'border-b-2', 'border-blue-500');
+}
+
 function copyCode(button) {
-    const preElement = button.nextElementSibling;
-    const codeElement = preElement.querySelector('code');
-    const text = codeElement.textContent;
+    const preElement = button.closest('.bg-gray-800').querySelector('pre');
+    const text = preElement.textContent;
     
     navigator.clipboard.writeText(text).then(() => {
-        // Change button text temporarily
         const originalText = button.textContent;
         button.textContent = 'Copied!';
-        button.classList.add('bg-green-600');
+        button.classList.add('bg-green-500');
         
-        // Reset button text after 2 seconds
         setTimeout(() => {
             button.textContent = originalText;
-            button.classList.remove('bg-green-600');
+            button.classList.remove('bg-green-500');
         }, 2000);
     }).catch(err => {
         console.error('Failed to copy text: ', err);
         button.textContent = 'Failed to copy';
-        button.classList.add('bg-red-600');
+        button.classList.add('bg-red-500');
         
         setTimeout(() => {
-            button.textContent = 'Copy';
-            button.classList.remove('bg-red-600');
+            button.textContent = 'Copy Code';
+            button.classList.remove('bg-red-500');
         }, 2000);
     });
 }
@@ -622,6 +841,11 @@ themeToggle.addEventListener('click', () => {
     } else {
         localStorage.theme = 'light';
     }
+});
+
+// Add transition classes
+document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.add('transition-all', 'duration-300', 'ease-in-out');
 });
 </script>
 {% endblock %} 

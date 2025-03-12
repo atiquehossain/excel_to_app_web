@@ -1,85 +1,127 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-3xl mx-auto">
-        <h1 class="text-3xl font-bold text-center mb-8">Welcome to Excel to Register App Builder</h1>
-        
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">App Configuration</h2>
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Page Title Section -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                    App Builder
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-300">
+                    Configure your Flutter application settings
+                </p>
+            </div>
             
-            <form id="appBuilderForm" class="space-y-6">
-                {% csrf_token %}
-                <!-- App Name -->
-                <div>
-                    <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">
-                        App Name
-                    </label>
-                    <input type="text" 
-                           id="appName" 
-                           name="appName" 
-                           class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Enter your app name"
-                           required>
-                    <p class="mt-1 text-sm text-gray-500">
-                        This will be used as the main class name for your app
-                    </p>
-                </div>
-
-                <!-- Sheet Class Names -->
-                <div>
-                    <h3 class="text-lg font-medium mb-3">Sheet Class Names</h3>
+            <!-- Main Form Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+                <form id="appBuilderForm" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <!-- App Name Section -->
                     <div class="space-y-4">
-                        <!-- Ideal Sheet -->
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Ideal Sheet Class Name
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">App Configuration</h2>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-gray-700 rounded-xl p-6 space-y-3">
+                            <label for="appName" class="block text-lg font-medium text-gray-700 dark:text-gray-300">
+                                App Name
                             </label>
                             <input type="text" 
-                                   name="sheet_class_{{ ideal_sheet }}" 
-                                   value="{{ ideal_sheet|title }}"
-                                   class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   id="appName" 
+                                   name="appName" 
+                                   class="w-full p-3 border rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300"
+                                   placeholder="Enter your app name"
                                    required>
-                            <p class="mt-1 text-xs text-gray-500">
-                                (Ideal Sheet: {{ ideal_sheet }})
+                            <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                                This will be used as the main class name for your application
                             </p>
                         </div>
+                    </div>
 
-                        <!-- Other Sheets -->
-                        {% for sheet in sheets %}
-                            {% if sheet != ideal_sheet %}
-                            <div class="p-4 border rounded-lg">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Sheet Class Name
-                                </label>
+                    <!-- Sheet Class Names Section -->
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            <h3 class="text-2xl font-semibold text-gray-800 dark:text-white">Sheet Class Names</h3>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <!-- Ideal Sheet -->
+                            <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 p-6 rounded-xl border border-blue-100 dark:border-gray-600 transform transition-all duration-300 hover:scale-[1.01]">
+                                <div class="flex items-center space-x-2 mb-4">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <label class="text-lg font-medium text-gray-800 dark:text-white">
+                                        Ideal Sheet Class Name
+                                    </label>
+                                </div>
                                 <input type="text" 
-                                       name="sheet_class_{{ sheet }}" 
-                                       value="{{ sheet|title }}"
-                                       class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       name="sheet_class_{{ ideal_sheet }}" 
+                                       value="{{ ideal_sheet|title }}"
+                                       class="w-full p-3 border rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300"
                                        required>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    (Sheet: {{ sheet }})
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
+                                    Ideal Sheet: {{ ideal_sheet }}
                                 </p>
                             </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
 
-                <!-- Submit Button -->
-                <div class="flex justify-end space-x-4">
-                    <button type="button" 
-                            onclick="window.history.back()" 
-                            class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-                        Back
-                    </button>
-                    <button type="submit" 
-                            class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                        Continue
-                    </button>
-                </div>
-            </form>
+                            <!-- Other Sheets -->
+                            {% for sheet in sheets %}
+                                {% if sheet != ideal_sheet %}
+                                <div class="bg-white dark:bg-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600 transform transition-all duration-300 hover:scale-[1.01]">
+                                    <div class="flex items-center space-x-2 mb-4">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <label class="text-lg font-medium text-gray-800 dark:text-white">
+                                            Sheet Class Name
+                                        </label>
+                                    </div>
+                                    <input type="text" 
+                                           name="sheet_class_{{ sheet }}" 
+                                           value="{{ sheet|title }}"
+                                           class="w-full p-3 border rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300"
+                                           required>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic">
+                                        Sheet: {{ sheet }}
+                                    </p>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <button type="button" 
+                                onclick="window.history.back()" 
+                                class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-300">
+                            Back
+                        </button>
+                        <button type="submit" 
+                                class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform hover:scale-[1.02] transition-all duration-300">
+                            Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+        <p class="mt-6 text-lg font-medium text-gray-700 dark:text-gray-300">Generating your app...</p>
     </div>
 </div>
 
@@ -104,11 +146,15 @@ document.getElementById('appBuilderForm').addEventListener('submit', async funct
     
     if (isValid) {
         try {
-            // Show loading state
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            // Show loading state on button
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
             submitButton.disabled = true;
             submitButton.textContent = 'Generating...';
+            submitButton.classList.add('opacity-75', 'cursor-not-allowed');
             
             // Get the CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -137,9 +183,13 @@ document.getElementById('appBuilderForm').addEventListener('submit', async funct
             // Show error message
             alert('Error generating database: ' + error.message);
         } finally {
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            
             // Reset button state
             submitButton.disabled = false;
             submitButton.textContent = originalText;
+            submitButton.classList.remove('opacity-75', 'cursor-not-allowed');
         }
     }
 });
