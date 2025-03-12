@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% load static %}
+
+{% block title %}Preview Generated Code - Excel to Dart Code Generator{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100">
@@ -310,12 +313,9 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
     {
         if (condition) {
         return GestureDetector(
-
             onDoubleTap: () {
             // Show a toast message
-
             Operations.makeSnackBar(backgroundColor: Colors.white, context, " number: ${number.toString()}");
-            print("Question number: ${number.toString()}");
             },
             child: widget,
         );
@@ -848,4 +848,8 @@ document.querySelectorAll('.tab-content').forEach(tab => {
     tab.classList.add('transition-all', 'duration-300', 'ease-in-out');
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/preview.js' %}"></script>
 {% endblock %} 

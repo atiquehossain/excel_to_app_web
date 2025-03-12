@@ -67,17 +67,14 @@ def get_sheets(request):
     try:
         # Get the uploaded file
         excel_file = request.FILES['file']
-        print(f"File received: {excel_file.name}, size: {excel_file.size} bytes")
         
         # Save the file temporarily
         path = default_storage.save(f'uploads/{excel_file.name}', ContentFile(excel_file.read()))
         full_path = os.path.join(settings.MEDIA_ROOT, path)
-        print(f"File saved to: {full_path}")
         
         try:
             # Get all sheets from the Excel file
             sheets = get_excel_sheets(full_path)
-            print(f"Sheets found: {sheets}")
             
             if not sheets:
                 return JsonResponse({'error': 'No sheets found in the Excel file'}, status=400)
@@ -87,18 +84,15 @@ def get_sheets(request):
                 'sheets': sheets,
                 'filename': excel_file.name
             }
-            print(f"Returning response: {response_data}")
             return JsonResponse(response_data)
             
         except Exception as e:
-            print(f"Error processing Excel file: {e}")
             return JsonResponse({'error': f'Error processing Excel file: {e}'}, status=500)
         finally:
             # We don't delete the file here as we'll need it for processing
             pass
     
     except Exception as e:
-        print(f"Error in get_sheets view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @require_http_methods(["POST"])
@@ -216,7 +210,6 @@ def upload_file(request):
                 default_storage.delete(path)
     
     except Exception as e:
-        print(f"Error in upload_file view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 @require_http_methods(["GET"])
