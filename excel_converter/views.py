@@ -261,7 +261,6 @@ def download_file(request, filename):
             filename=filename
         )
     except Exception as e:
-        print(f"Error in download_file view: {e}")
         return JsonResponse({'error': str(e)}, status=404)
 
 def download_all_files(request):
@@ -298,7 +297,6 @@ def download_all_files(request):
         return response
     
     except Exception as e:
-        print(f"Error in download_all_files view: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 def normalize_column_name(column):
@@ -413,8 +411,7 @@ def validate_row_data(df, required_columns):
 @api_view(['POST'])
 def validate_columns(request):
     try:
-        print("\n=== Validation Data ===")
-        print("Request data:", request.data)
+        
         # Get form data
         filename = request.POST.get('filename')
         sheets = json.loads(request.POST.get('sheets', '[]'))
@@ -560,9 +557,7 @@ def validate_columns(request):
                 'field_languages': field_languages
             }
             
-            print("\n=== Storing Metadata ===")
-            print("Field name column:", field_name_column)
-            print("Full metadata:", request.session['metadata'])
+          
             
             if not has_column_issues and not has_row_issues:
                 # Store all necessary data in session
@@ -603,14 +598,14 @@ def validate_columns(request):
             return render(request, 'excel_converter/validation_results.html', context)
         
         except Exception as e:
-            print(f"Error in validate_columns: {e}")
+           
             return JsonResponse({
                 'success': False,
                 'error': str(e)
             })
     
     except Exception as e:
-        print(f"Error in validate_columns: {e}")
+       
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -688,11 +683,11 @@ def get_columns(request):
             })
             
         except Exception as e:
-            print(f"Error processing Excel file: {e}")
+            
             return JsonResponse({'error': f'Error processing Excel file: {e}'}, status=500)
     
     except Exception as e:
-        print(f"Error in get_columns view: {e}")
+       
         return JsonResponse({'error': str(e)}, status=500)
 
 def app_builder(request):
@@ -720,13 +715,9 @@ def app_builder(request):
 def generate_database(request):
     """Generate database for each sheet with custom class names."""
     try:
-        # Debug prints for metadata
-        print("\n=== DEBUG METADATA ===")
+      
         metadata = request.session.get('metadata', {})
-        print("All metadata:", metadata)
-        print("Field name column from metadata:", metadata.get('field_name_column'))
-        print("Available columns in metadata:", list(metadata.keys()))
-        print("=== END DEBUG ===\n")
+      
 
         # Get form data
         app_name = request.POST.get('appName')
@@ -767,9 +758,7 @@ def generate_database(request):
         for sheet in sheets:
             df = process_excel_file(path, sheet)
             
-            print(f"\n=== Processing Sheet: {sheet} ===")
-            print("DataFrame columns:", df.columns.tolist())
-            
+        
             # Get questions and fields
             questions = []
             fields = []
@@ -777,9 +766,7 @@ def generate_database(request):
             # Get column names from metadata
             question_col = metadata.get('question_column', '')
             field_name_col = metadata.get('field_name_column', '')
-            
-            print(f"Looking for question column: '{question_col}'")
-            print(f"Looking for field name column: '{field_name_col}'")
+
             
             # Try different variations of column names
             question_variations = [
@@ -815,7 +802,6 @@ def generate_database(request):
                 for col in df.columns:
                     if col.lower().strip() == possible_col.lower().strip():
                         actual_question_col = col
-                        print(f"Found matching question column: '{col}'")
                         break
                 if actual_question_col:
                     break
@@ -824,34 +810,24 @@ def generate_database(request):
             actual_field_col = None
             for possible_col in field_variations:
                 if possible_col:  # Only check if possible_col is not empty
-                    print(f"Checking for field column: '{possible_col}'")
                     for col in df.columns:
-                        print(f"  Comparing with: '{col}'")
                         if col.lower().strip() == possible_col.lower().strip():
                             actual_field_col = col
-                            print(f"Found matching field column: '{col}'")
                             break
                 if actual_field_col:
                     break
             
             if not actual_field_col:
-                print("Available columns for field names:")
                 for col in df.columns:
                     print(f"  - {col}")
             
             # Process questions
             if actual_question_col:
-                print(f"Processing questions from column: '{actual_question_col}'")
                 database_col = metadata.get('database_column', '').lower().strip()
                 datatype_col = metadata.get('datatype_column', '').lower().strip()
                 
-                print(f"Datatype column from metadata: '{datatype_col}'")
-                print(f"All columns: {df.columns.tolist()}")
                 
-                # Print the first few rows of the dataframe to see what's in it
-                print("\nFirst 3 rows of the dataframe:")
                 for idx, row in df.head(3).iterrows():
-                    print(f"\nRow {idx}:")
                     for col in df.columns:
                         print(f"  {col}: {row.get(col, '')}")
                 
@@ -863,13 +839,11 @@ def generate_database(request):
                     for col in df.columns:
                         if variation.lower() in col.lower():
                             data_type_col = col
-                            print(f"Found data type column: '{col}' (matched with '{variation}')")
                             break
                     if data_type_col:
                         break
                 
                 if data_type_col:
-                    print(f"Using data type column: '{data_type_col}' instead of '{datatype_col}'")
                     datatype_col = data_type_col
                 
                 # Look specifically for question number column
@@ -880,7 +854,6 @@ def generate_database(request):
                     for col in df.columns:
                         if col.lower().strip() == possible_col.lower().strip():
                             question_no_col = col
-                            print(f"Found question number column: '{col}'")
                             break
                     if question_no_col:
                         break
@@ -901,7 +874,6 @@ def generate_database(request):
                     question = row.get(actual_question_col, '')
                     database_value = row.get(database_col, '')
                     
-                    print(f"\nProcessing row {idx}, question: '{question}', database: '{database_value}'")
                     
                     # Get field type with multiple fallbacks
                     field_type = "Text"  # Default
@@ -909,10 +881,8 @@ def generate_database(request):
                     # Try to get from datatype column
                     if datatype_col and datatype_col in df.columns:
                         raw_field_type = row.get(datatype_col, '')
-                        print(f"  Raw field type from column '{datatype_col}': '{raw_field_type}'")
                         if pd.notna(raw_field_type) and str(raw_field_type).strip():
                             field_type = str(raw_field_type).strip()
-                            print(f"  Using field type from column: '{field_type}'")
                     else:
                         print(f"  Datatype column '{datatype_col}' not found in {df.columns.tolist()}")
                     
@@ -920,7 +890,6 @@ def generate_database(request):
                     if database_value and database_value.lower() in hardcoded_types:
                         old_field_type = field_type
                         field_type = hardcoded_types[database_value.lower()]
-                        print(f"  Overriding field type '{old_field_type}' with hardcoded type '{field_type}' for '{database_value}'")
                     
                     # After getting the field type
                     # Get question number from the dedicated column if available
@@ -929,10 +898,7 @@ def generate_database(request):
                         q_no_value = row.get(question_no_col, '')
                         if pd.notna(q_no_value) and str(q_no_value).strip():
                             question_no = str(q_no_value).strip()
-                            print(f"  Found question number: {question_no} for question: {question}")
                     
-                    # Final field type
-                    print(f"  Final field type: '{field_type}'")
                     
                     if pd.notna(question) and str(question).strip():
                         question_text = str(question).strip()
@@ -966,11 +932,9 @@ def generate_database(request):
                                 'field_type': field_type,
                                 'question_no': question_no
                             })
-                            print(f"Added question: '{question_text}' with key: '{key}', field_type: '{field_type}'")
             
             # Process field names
             if actual_field_col:
-                print(f"Processing fields from column: '{actual_field_col}'")
                 database_col = metadata.get('database_column', '').lower().strip()
                 
                 # Keep track of the current database context
@@ -983,7 +947,6 @@ def generate_database(request):
                     # Update current database context if we have a new database value
                     if pd.notna(database_value) and str(database_value).strip():
                         current_database_value = str(database_value).strip()
-                        print(f"Updated database context to: {current_database_value}")
                     
                     if pd.notna(field) and str(field).strip():
                         field_text = str(field).strip()
@@ -999,11 +962,9 @@ def generate_database(request):
                             # Combine: fieldkey_databasevalue (e.g., farming_income_lost)
                             key = f"{field_key}_{db_key}"
                             
-                            print(f"Generated key with database context: {key}")
                         else:
                             # No database context, use simple format
                             key = field_key
-                            print(f"Generated key without database context: {key}")
                         
                         # Don't add model name to the key
                         if not any(f['key'] == key for f in fields):
@@ -1012,7 +973,6 @@ def generate_database(request):
                                 'key': key,
                                 'database_value': current_database_value
                             })
-                            print(f"Added field: '{field_text}' with key: '{key}' (database: {current_database_value})")
             
             # Generate code for the sheet
             code = generate_dart_code(df, sheet_classes[sheet], preview=True, metadata=metadata)
@@ -1026,12 +986,7 @@ def generate_database(request):
                 'fields': fields
             })
         
-        # Print final results
-        print("\nFinal Results:")
-        for file in generated_files:
-            print(f"\nSheet: {file['sheet']}")
-            print(f"Questions found: {len(file['questions'])}")
-            print(f"Fields found: {len(file['fields'])}")
+      
             
         # Store results in session
         request.session['generation_results'] = {
@@ -1045,8 +1000,7 @@ def generate_database(request):
         })
         
     except Exception as e:
-        print(f"Error in generate_database: {e}")
-        print(f"Traceback: {traceback.format_exc()}")
+     
         return JsonResponse({
             'success': False,
             'error': str(e)
