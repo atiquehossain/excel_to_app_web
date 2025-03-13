@@ -268,7 +268,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
 
    {{ file.class_name }} {{ file.class_name|stringformat:"s"|lower }} = {{ file.class_name }}();
 
-   List  numbers =[];
+   List numbers = [{% if file.questions %}{% for question in file.questions %}{{ question.question_no|default:forloop.counter }},{% endfor %}{% endif %}];
 
   @override
   void didChangeDependencies() {
@@ -283,28 +283,55 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        {% if file.questions %}
-        {% for question in file.questions %}
-        /// Number = {{ question.question_no|default:forloop.counter }}
-        {{ file.class_name }}Data(
-          number: {{ question.question_no|default:forloop.counter }},
-          condition: numbers.contains({{ question.question_no|default:forloop.counter }}),
-          widget: {{ file.class_name }}Widget(
-            question: Languages.getText(context)!.{{ question.key }},
-            fieldType: {% if question.field_type|lower == 'radio' %}AppConstant.FieldType_radio{% elif question.field_type|lower == 'dropdown' %}AppConstant.FieldType_dropdown{% elif question.field_type|lower == 'multiple choice' %}AppConstant.FieldType_multiple_choice{% elif question.field_type|lower == 'multiple-choice' %}AppConstant.FieldType_multiple_choice{% elif question.field_type|lower == 'multiplechoice' %}AppConstant.FieldType_multiple_choice{% elif question.field_type|lower == 'number' %}AppConstant.FieldType_NumberText{% elif question.field_type|lower == 'date' %}AppConstant.FieldType_date{% elif question.field_type|lower == 'datetime' %}AppConstant.FieldType_date{% elif question.field_type|lower == 'image' %}AppConstant.FieldType_Image{% elif question.field_type|lower == 'photo' %}AppConstant.FieldType_Image{% else %}AppConstant.FieldType_EditText{% endif %},
-            {% if question.field_type == 'Number' %}keyboardType: TextInputType.number,{% endif %}
-            field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},
-            dataList: {% if question.field_type == 'Number' or question.field_type == 'Text' %}null {% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}) {% endif %},
-            onChanged: (value) {
-                {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
-            },
+    return SafeArea(
+      child: Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+              {% if file.questions %}
+              {% for question in file.questions %}
+              /// Number = {{ question.question_no|default:forloop.counter }}
+              {{ file.class_name }}Data(
+                number: {{ question.question_no|default:forloop.counter }},
+                condition: numbers.contains({{ question.question_no|default:forloop.counter }}),
+                widget: {{ file.class_name }}Widget(
+                  question: Languages.getText(context)!.{{ question.key }},
+                  {% if question.field_type|lower == 'radio' %}
+                  fieldType: AppConstant.FieldType_radio,
+                  {% elif question.field_type|lower == 'dropdown' %}
+                  fieldType: AppConstant.FieldType_dropdown,
+                  {% elif question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+                  fieldType: AppConstant.FieldType_multiple_choice,
+                  {% elif question.field_type|lower == 'number' %}
+                  fieldType: AppConstant.FieldType_NumberText,
+                  keyboardType: TextInputType.number,
+                  {% elif question.field_type|lower == 'date' or question.field_type|lower == 'datetime' %}
+                  fieldType: AppConstant.FieldType_date,
+                  {% elif question.field_type|lower == 'image' or question.field_type|lower == 'photo' %}
+                  fieldType: AppConstant.FieldType_Image,
+                  {% elif question.field_type|lower == 'pdf' %}
+                  fieldType: AppConstant.FieldType_PDF,
+                  {% else %}
+                  fieldType: AppConstant.FieldType_EditText,
+                  {% endif %}
+                  field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},  <!-- Added field property here -->
+                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}){% endif %},
+                  onChanged: (value) {
+                      {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
+                  },
+                ),
+              ),
+              {% endfor %}
+{% endif %}
+
+          
+              ],
+            ),
           ),
         ),
-        {% endfor %}
-        {% endif %}
-      ],
+      ),
     );
   }
 
@@ -368,7 +395,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
   
     @override
     Widget build(BuildContext context) {
-  
+    AppColor appColor = AppColor();
   
   
       return Padding(
@@ -381,7 +408,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
               onLongPress: () {
                 Clipboard.setData(ClipboardData(text: question));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Question copied to clipboard!')),
+                  const SnackBar(content: Text('Question copied to clipboard!')),
                 );
               },
               child: Padding(
@@ -391,7 +418,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   style: TextStyle(
                     fontSize: AppDimens.getTextSize(textSizeType: TextSizeType.normal),
                     letterSpacing: AppDimens.getTextLetterSpacing(),
-                    color: appColor!.H1_Title_Text,
+                    color: appColor.H1_Title_Text,
                   ),
                 ),
               ),
@@ -403,21 +430,21 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                 showMandatoryStar: false,
                 selectedOptionValue: field,
                 dropdownType: DropdownType.simple,
-                borderColor: appColor!.H1_Title_Text,
-                textColor: appColor!.H1_Title_Text,
-                normalColor: appColor!.Background,
-                itemsBackground: appColor!.Disabled_Background,
-                background: appColor!.Disabled_Background as Color,
+                borderColor: appColor.H1_Title_Text,
+                textColor: appColor.H1_Title_Text,
+                normalColor: appColor.Background,
+               // itemsBackground: appColor!.Disabled_Background,
+              //  background: appColor!.Disabled_Background as Color,
                 onChange: onChanged,
               )
-            else if (fieldType == AppConstant.FieldType_EditText)
+            else if (fieldType == AppConstant.FieldType_NumberText)
               Padding(
                 padding: const EdgeInsets.all( 8.0),
                 child: NewTextFieldAAP(
                   labelText: "",
                   initialValue: field,
                   borderRadius: 10,
-                  focusNode: focusNode, // Assign the FocusNode
+                 // focusNode: focusNode, // Assign the FocusNode
                   keyboardType: keyboardType, // Assign the KeyboardType
                   isEnable: textFieldEditable ?? true,
                   validator: (value) {
@@ -443,61 +470,39 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
               else if (fieldType == AppConstant.FieldType_multiple_choice)
                   MultipleChoiceAAP(
                     checkList: dataList,
-                    textColor: appColor?.H1_Title_Text,
-                    checkBoxColor: appColor?.Warning_Text,
-                    borderColor: appColor?.H1_Title_Text,
-                    backgroundColor: appColor?.Disabled_Background,
-                    appColor: appColor,
+                    textColor: appColor.H1_Title_Text,
+                    checkBoxColor: appColor.Warning_Text,
+                    borderColor: appColor.H1_Title_Text,
+                    backgroundColor: appColor.Disabled_Background,
+                   // appColor: appColor,
                     selectedOptionValues: field,
                     onChange: (value) => onChanged.call(value),
                     fontSize: AppDimens.getTextSize(
                         textSizeType: TextSizeType.normal),
                   )
-                else if (fieldType == AppConstant.MultipleChoiceWithField)
-                    MultipleChoiceWithFieldAAP(
-                      checkList: dataList,
-                      textColor: appColor!.H1_Title_Text,
-                      checkBoxColor: appColor!.Warning_Text,
-                      borderColor: appColor!.H1_Title_Text,
-                      backgroundColor: appColor!.Disabled_Background,
-                      appColor: appColor,
-                      title: Languages.getText(context)!.pleas_select_item,
-                      subTitle: Languages.getText(context)!.write_down_the_text,
-                      inputFieldHints: Languages.getText(context)!.writeHere,
-                      inputFieldTitle: Languages.getText(context)!.enter_information,
-                      underCheckTitle: Languages.getText(context)!.numberIs,
-                      selectedOptionValues: field,
-                      textInputType: keyboardType,
-                      selectedOptionValuesTexts: selectedOptionValuesTextsField,
   
-                      onChange: (value, texts) => onChanged.call(value, texts),
-                      fontSize:
-                      AppDimens.getTextSize(textSizeType: TextSizeType.normal),
-                    )
                   else if (fieldType ==  AppConstant.FieldType_Image)
                       FilePickerGeneralAAP(
-                        appColor: appColor as AppColor,
+                        appColor: appColor,
                         uploadType: UploadType.Base64,
                         pickerType: PickerType.Image,
                         field: field,
-                        borderColor: appColor!.H1_Title_Text,
+                        borderColor: appColor.H1_Title_Text,
   
-                        background: appColor!.Disabled_Background as Color,
+                        background: appColor.Disabled_Background as Color,
                         fileNameField: fileNameField,
                         fileTypeField: fileTypeField,
                         fileDateField: fileDateField,
   
-                        fileStoragePath: Operations.getFileStoragePath(userId: userId, photoType: photoType ),
+                        fileStoragePath: getFileStoragePath(userId: userId, photoType: photoType ),
                         //fieldTitle: 'dbuivsahvfhsv bvgidsbvfi jgfty',
                         //dialogSubtitle: "bjbscjvd",
                         //dialogTitle: "eeeeeeee",
                         dialogIconPath: "assets/images/papers.png",
   
                         onChange: (filename, filePath, fileType, file, date) {
-                          if(onChanged != null){
-                            onChanged(filename, filePath, fileType, file, date);
-                          }
-                        },
+                          onChanged(filename, filePath, fileType, file, date);
+                                              },
                       ),
           ],
         ),
