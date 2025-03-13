@@ -133,7 +133,6 @@ EXCEL_SETTINGS = {
 
 DART_SETTINGS = {
     'null_safety': True,
-    'output_folder': 'generated_code',
     'template_folder': 'templates',
     'indent_size': 2,
     'max_line_length': 80

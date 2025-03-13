@@ -25,483 +25,79 @@ def get_excel_sheets(file_path):
         print(f"Error getting sheet names: {e}")
         return []
 
+def normalize_sheet_name(name):
+    """Normalize sheet name by removing spaces and special characters."""
+    return re.sub(r'[^a-zA-Z0-9]', '', str(name).strip())
+
 def process_excel_file(file_path, sheet_name=None):
     """Process the Excel file and return a DataFrame."""
     # Ensure we're using the correct path
     if not os.path.isabs(file_path):
         file_path = get_excel_path(os.path.basename(file_path))
     
-    # Get sheet names if not provided
-    if not sheet_name:
-        excel_file = pd.ExcelFile(file_path)
-        sheet_names = excel_file.sheet_names
-        if sheet_names:
-            sheet_name = sheet_names[0]  # Use the first sheet by default
-        else:
-            raise ValueError("No sheets found in the Excel file.")
+    try:
+        # Get sheet names if not provided
+        if not sheet_name:
+            excel_file = pd.ExcelFile(file_path)
+            sheet_names = excel_file.sheet_names
+            if sheet_names:
+                sheet_name = sheet_names[0]  # Use the first sheet by default
+            else:
+                raise ValueError("No sheets found in the Excel file.")
 
-    # Load workbook and get hidden rows
-    workbook = load_workbook(file_path, data_only=True)
-    sheet = workbook[sheet_name]
-    hidden_rows = [row for row in sheet.row_dimensions if sheet.row_dimensions[row].hidden]
-    
-    # Read Excel file
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
-    
-    # Skip hidden rows if configured
-    if settings.EXCEL_SETTINGS['skip_hidden_rows']:
-        df = df.drop(index=[row - 1 for row in hidden_rows if row <= len(df)])
-    
-    # Clean column names
-    df.columns = (
-        df.columns.str.strip()
-                .str.lower()
-                .str.replace(r'\s+', '_', regex=True)
-                .str.replace(r'[^\w]', '', regex=True)
-    )
-    
-    # Convert all columns to string type to avoid .str accessor errors
-    for col in df.columns:
-        df[col] = df[col].fillna('').astype(str)
-    
-    return df
+        # Verify sheet exists with normalized comparison
+        excel_file = pd.ExcelFile(file_path)
+        normalized_sheet_name = normalize_sheet_name(sheet_name)
+        available_sheets = excel_file.sheet_names
+        
+        # Try to find a matching sheet
+        matching_sheet = None
+        for available_sheet in available_sheets:
+            if normalize_sheet_name(available_sheet) == normalized_sheet_name:
+                matching_sheet = available_sheet
+                break
+        
+        if not matching_sheet:
+            raise ValueError(f"Sheet '{sheet_name}' not found in the Excel file. Available sheets: {', '.join(available_sheets)}")
+
+        # Load workbook and get hidden rows
+        workbook = load_workbook(file_path, data_only=True)
+        sheet = workbook[matching_sheet]
+        hidden_rows = [row for row in sheet.row_dimensions if sheet.row_dimensions[row].hidden]
+        
+        # Read Excel file
+        df = pd.read_excel(file_path, sheet_name=matching_sheet)
+        
+        # Skip hidden rows if configured
+        if settings.EXCEL_SETTINGS['skip_hidden_rows']:
+            df = df.drop(index=[row - 1 for row in hidden_rows if row <= len(df)])
+        
+        # Clean column names
+        df.columns = (
+            df.columns.str.strip()
+                    .str.lower()
+                    .str.replace(r'\s+', '_', regex=True)
+                    .str.replace(r'[^\w]', '', regex=True)
+        )
+        
+        # Convert all columns to string type to avoid .str accessor errors
+        for col in df.columns:
+            df[col] = df[col].fillna('').astype(str)
+        
+        return df
+        
+    except Exception as e:
+        raise ValueError(f"Error processing Excel file: {str(e)}")
 
 def clean_column_name(name):
     """Clean column names by replacing non-alphanumeric characters with underscores."""
     return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower()
-
-def sanitize_key(name):
-    """Sanitize keys to ensure they are valid Dart identifiers."""
-    return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower()
-
-def write_dart_file(file_path, content, output_folder=None):
-    """Write Dart code to a file."""
-    if output_folder is None:
-        output_folder = settings.DART_SETTINGS['output_folder']
-    
-    os.makedirs(output_folder, exist_ok=True)
-    file_path = os.path.join(output_folder, file_path)
-    with open(file_path, 'w', encoding='utf-8') as file:
-        file.write(content)
-    return file_path
 
 def count_dropdown_and_multiple_choice_columns(df, threshold=10):
     """Count the number of dropdown and multiple-choice columns in a DataFrame."""
     dropdown_columns = [col for col in df.columns if df[col].nunique() <= threshold]
     return len(dropdown_columns), dropdown_columns
 
-def generate_dart_code(df, class_name, preview=False):
-    """Generate Dart code from DataFrame."""
-    # Create output directory if it doesn't exist
-    output_folder = settings.DART_SETTINGS['output_folder']
-    os.makedirs(output_folder, exist_ok=True)
-    
-    # Process the data for localization and UI generation
-    try:
-        # Convert all columns to string and fill NaN values
-        for col in df.columns:
-            df[col] = df[col].fillna('').astype(str)
-        
-        # Check for required columns
-        required_columns = ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala', 'data_type', 'database']
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        
-        if missing_columns:
-            # Try alternative columns for standard model generation
-            alt_required_columns = ['questions_in_english', 'labels_in_english', 'data_type', 'database']
-            alt_missing_columns = [col for col in alt_required_columns if col not in df.columns]
-            
-            if alt_missing_columns:
-                # Fall back to simple model generation
-                return generate_simple_model(df, class_name, preview, output_folder)
-            else:
-                # Generate standard model
-                return generate_standard_model(df, class_name, preview, output_folder)
-        else:
-            # Generate full model with localization
-            return generate_full_model(df, class_name, preview, output_folder)
-    
-    except Exception as e:
-        print(f"Error generating Dart code: {e}")
-        # Fall back to simple model generation
-        return generate_simple_model(df, class_name, preview, output_folder)
-
-def generate_full_model(df, class_name, preview=False, output_folder=None):
-    """Generate full model with localization and UI."""
-    if output_folder is None:
-        output_folder = settings.DART_SETTINGS['output_folder']
-    
-    # Fill missing data
-    df['data_type'] = df['data_type'].fillna('').astype(str).replace('nan', '').ffill()
-    df['database'] = df['database'].fillna('').astype(str).replace('nan', '').ffill()
-
-    # Filter dropdown and multiple-choice rows
-    filtered_data = df[df['data_type'].str.strip().str.lower().isin(['dropdown', 'multiple choice', 'radio'])].copy()
-
-    # Ensure all relevant columns are strings and clean
-    for col in ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala']:
-        filtered_data[col] = filtered_data[col].fillna('').astype(str).apply(lambda x: x.strip())
-
-    # Flatten field names in English
-    filtered_data['field_names_in_english'] = filtered_data['field_names_in_english'].fillna('').astype(str).apply(lambda x: x.strip())
-
-    # Sanitize key directly from the full row value
-    filtered_data['sanitized_key'] = filtered_data['field_names_in_english'].apply(sanitize_key)
-
-    flattened_data = filtered_data.explode('field_names_in_english').reset_index(drop=True)
-
-    # Group data by database
-    grouped_data = flattened_data.groupby('database')['field_names_in_english'].apply(list).to_dict()
-
-    # Generate localization data
-    localization_data = {lang: {} for lang in ['English', 'Tamil', 'Sinhala']}
-    today_date = datetime.now().strftime('%Y-%m-%d')
-
-    for _, row in flattened_data.iterrows():
-        english_name = str(row['field_names_in_english']).strip()
-        tamil_name = str(row['field_names_in_tamil']).strip()
-        sinhala_name = str(row['field_names_in_sinhala']).strip()
-        database_name = sanitize_key(str(row['database']).strip())  # Sanitize the database name
-        sanitized_key = f"{sanitize_key(english_name)}_{database_name}"  # Append database to the key
-
-        localization_data['English'][sanitized_key] = english_name
-        localization_data['Tamil'][sanitized_key] = tamil_name
-        localization_data['Sinhala'][sanitized_key] = sinhala_name
-
-    # Generate localization files field type
-    generated_files = []
-    for lang, lang_file in {'English': 'en_field.dart', 'Tamil': 'ta_field.dart', 'Sinhala': 'si_field.dart'}.items():
-        content = f"/// {class_name} localization file - {today_date}\n\n"
-        content += "class Localization {\n"
-        for key, value in localization_data[lang].items():
-            content += f"  String get {key}_ufind_v2 => '{value}';\n"
-        content += "}\n"
-        file_path = write_dart_file(lang_file, content, output_folder)
-        generated_files.append(file_path)
-
-    # Generate keys file field types
-    keys_file = "field_keys.dart"
-    content = f"/// {class_name} keys file - {today_date}\n\n"
-    content += "\n"
-    for key in localization_data['English'].keys():
-        content += f"  String get {key}_ufind_v2;\n"
-    content += f"/// {class_name} end keys \n"
-    file_path = write_dart_file(keys_file, content, output_folder)
-    generated_files.append(file_path)
-
-    # Generate grouped data Dart code 
-    # Setupdata class
-    dart_code = ""
-    for database, fields in grouped_data.items():
-        dart_code += f"static const String {database}_ufind_v2 = \"{database}\";\n"
-
-    for database, fields in grouped_data.items():
-        dart_code += f"else if (modelName == SetupConstant.{database}_ufind_v2) {{\n"
-        for index, field in enumerate(fields, start=1):
-            sanitized_field = sanitize_key(str(field).strip())
-            dart_code += f"  items.add(SetupModel(Languages.getText(context)!.{sanitized_field}_{database}_ufind_v2, \"{index}\"));\n"
-        dart_code += "}\n\n"
-
-    setup_file = "setupData.dart"
-    file_path = write_dart_file(setup_file, dart_code, output_folder)
-    generated_files.append(file_path)
-
-    # Generate model and UI files
-    model_content = generate_model_content(class_name, df)
-    ui_content = generate_ui_content(class_name, df)
-    
-    model_file = f"{class_name.lower()}_model.dart"
-    ui_file = f"{class_name.lower()}_ui_widget.dart"
-    
-    model_path = write_dart_file(model_file, model_content, output_folder)
-    ui_path = write_dart_file(ui_file, ui_content, output_folder)
-    
-    generated_files.append(model_path)
-    generated_files.append(ui_path)
-
-    if preview:
-        # Return a preview of all generated files
-        preview_content = f"// Generated files for {class_name}:\n\n"
-        for file_path in generated_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                file_content = f.read()
-            preview_content += f"// File: {os.path.basename(file_path)}\n{file_content}\n\n"
-        return preview_content
-    
-    return generated_files[0]  # Return the first file path
-
-def generate_standard_model(df, class_name, preview=False, output_folder=None):
-    """Generate standard model with UI."""
-    if output_folder is None:
-        output_folder = settings.DART_SETTINGS['output_folder']
-    
-    # Generate model and UI files
-    model_content = generate_model_content(class_name, df)
-    ui_content = generate_ui_content(class_name, df)
-    
-    model_file = f"{class_name.lower()}_model.dart"
-    ui_file = f"{class_name.lower()}_ui_widget.dart"
-    
-    model_path = write_dart_file(model_file, model_content, output_folder)
-    ui_path = write_dart_file(ui_file, ui_content, output_folder)
-    
-    if preview:
-        # Return a preview of both files
-        with open(model_path, 'r', encoding='utf-8') as f:
-            model_content = f.read()
-        with open(ui_path, 'r', encoding='utf-8') as f:
-            ui_content = f.read()
-        
-        preview_content = f"// Model file: {model_file}\n{model_content}\n\n// UI file: {ui_file}\n{ui_content}"
-        return preview_content
-    
-    return model_path
-
-def generate_simple_model(df, class_name, preview=False, output_folder=None):
-    """Generate a simple Dart model."""
-    if output_folder is None:
-        output_folder = settings.DART_SETTINGS['output_folder']
-    
-    # Generate code
-    code = []
-    code.append('import "package:flutter/material.dart";')
-    code.append('')
-    code.append(f'class {class_name} {{')
-    
-    # Add fields
-    for column in df.columns:
-        field_type = _get_field_type(df[column])
-        code.append(f'  final {field_type} {column};')
-    
-    code.append('')
-    
-    # Add constructor
-    code.append(f'  {class_name}({{')
-    for column in df.columns:
-        code.append(f'    required this.{column},')
-    code.append('  }});')
-    
-    code.append('')
-    
-    # Add fromJson factory
-    code.append(f'  factory {class_name}.fromJson(Map<String, dynamic> json) {{')
-    code.append(f'    return {class_name}(')
-    for column in df.columns:
-        field_type = _get_field_type(df[column])
-        code.append(f'      {column}: json["{column}"] as {field_type},')
-    code.append('    );')
-    code.append('  }')
-    
-    code.append('')
-    
-    # Add toJson method
-    code.append('  Map<String, dynamic> toJson() {')
-    code.append('    return {')
-    for column in df.columns:
-        code.append(f'      "{column}": {column},')
-    code.append('    };')
-    code.append('  }')
-    
-    code.append('}')
-    
-    # Join code lines
-    final_code = '\n'.join(code)
-    
-    if preview:
-        return final_code
-    
-    # Save to file
-    output_file = os.path.join(output_folder, f'{class_name}.dart')
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(final_code)
-    
-    return output_file
-
-def generate_model_content(class_name, df):
-    """Generate model content."""
-    code = []
-    code.append('import "package:flutter/material.dart";')
-    code.append('')
-    code.append(f'class {class_name} {{')
-    
-    # Add fields for each database column
-    databases = df['database'].unique() if 'database' in df.columns else []
-    for db in databases:
-        if pd.notna(db) and str(db).strip():
-            code.append(f'  static String {db} = "";')
-    
-    code.append('')
-    code.append('  // Constructor')
-    code.append(f'  {class_name}();')
-    
-    code.append('')
-    code.append('  // Factory method to create from JSON')
-    code.append(f'  factory {class_name}.fromJson(Map<String, dynamic> json) {{')
-    code.append(f'    final model = {class_name}();')
-    for db in databases:
-        if pd.notna(db) and str(db).strip():
-            code.append(f'    model.{db} = json["{db}"] ?? "";')
-    code.append('    return model;')
-    code.append('  }')
-    
-    code.append('')
-    code.append('  // Convert to JSON')
-    code.append('  Map<String, dynamic> toJson() {')
-    code.append('    return {')
-    for db in databases:
-        if pd.notna(db) and str(db).strip():
-            code.append(f'      "{db}": {db},')
-    code.append('    };')
-    code.append('  }')
-    
-    code.append('}')
-    
-    return '\n'.join(code)
-
-def generate_ui_content(class_name, df):
-    """Generate UI content."""
-    code = []
-    code.append('import "package:flutter/material.dart";')
-    code.append('import "package:flutter/services.dart";')
-    code.append('')
-    code.append(f'class {class_name}UI extends StatelessWidget {{')
-    code.append('  final String label;')
-    code.append('  final String question;')
-    code.append('  final int fieldType;')
-    code.append('  final String model;')
-    code.append('  final List<dynamic> dataList;')
-    code.append('  final Function(String) onChanged;')
-    code.append('')
-    code.append(f'  const {class_name}UI({{')
-    code.append('    Key? key,')
-    code.append('    required this.label,')
-    code.append('    required this.question,')
-    code.append('    required this.fieldType,')
-    code.append('    required this.model,')
-    code.append('    required this.dataList,')
-    code.append('    required this.onChanged,')
-    code.append('  }}) : super(key: key);')
-    code.append('')
-    code.append('  @override')
-    code.append('  Widget build(BuildContext context) {')
-    code.append('    return Column(')
-    code.append('      crossAxisAlignment: CrossAxisAlignment.start,')
-    code.append('      children: [')
-    code.append('        Text(')
-    code.append('          question,')
-    code.append('          style: TextStyle(')
-    code.append('            fontSize: 16,')
-    code.append('            fontWeight: FontWeight.bold,')
-    code.append('          ),')
-    code.append('        ),')
-    code.append('        SizedBox(height: 8),')
-    code.append('        _buildField(),')
-    code.append('        SizedBox(height: 16),')
-    code.append('      ],')
-    code.append('    );')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildField() {')
-    code.append('    switch (fieldType) {')
-    code.append('      case AppConstant.FieldType_dropdown:')
-    code.append('        return _buildDropdown();')
-    code.append('      case AppConstant.FieldType_multiple_choice:')
-    code.append('        return _buildMultipleChoice();')
-    code.append('      case AppConstant.FieldType_radio:')
-    code.append('        return _buildRadioGroup();')
-    code.append('      case AppConstant.FieldType_EditText:')
-    code.append('        return _buildTextField();')
-    code.append('      case AppConstant.FieldType_Image:')
-    code.append('        return _buildImagePicker();')
-    code.append('      default:')
-    code.append('        return _buildTextField();')
-    code.append('    }')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildDropdown() {')
-    code.append('    return DropdownButtonFormField<String>(')
-    code.append('      decoration: InputDecoration(')
-    code.append('        labelText: label,')
-    code.append('        border: OutlineInputBorder(),')
-    code.append('      ),')
-    code.append('      value: model.isNotEmpty ? model : null,')
-    code.append('      items: dataList.map((item) {')
-    code.append('        return DropdownMenuItem(')
-    code.append('          value: item.toString(),')
-    code.append('          child: Text(item.toString()),')
-    code.append('        );')
-    code.append('      }).toList(),')
-    code.append('      onChanged: (value) {')
-    code.append('        if (value != null) {')
-    code.append('          onChanged(value);')
-    code.append('        }')
-    code.append('      },')
-    code.append('    );')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildMultipleChoice() {')
-    code.append('    // Implementation for multiple choice')
-    code.append('    return Column(')
-    code.append('      crossAxisAlignment: CrossAxisAlignment.start,')
-    code.append('      children: [')
-    code.append('        Text(label),')
-    code.append('        // Add multiple choice implementation here')
-    code.append('      ],')
-    code.append('    );')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildRadioGroup() {')
-    code.append('    // Implementation for radio group')
-    code.append('    return Column(')
-    code.append('      crossAxisAlignment: CrossAxisAlignment.start,')
-    code.append('      children: [')
-    code.append('        Text(label),')
-    code.append('        // Add radio group implementation here')
-    code.append('      ],')
-    code.append('    );')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildTextField() {')
-    code.append('    return TextFormField(')
-    code.append('      decoration: InputDecoration(')
-    code.append('        labelText: label,')
-    code.append('        border: OutlineInputBorder(),')
-    code.append('      ),')
-    code.append('      initialValue: model,')
-    code.append('      onChanged: onChanged,')
-    code.append('    );')
-    code.append('  }')
-    code.append('')
-    code.append('  Widget _buildImagePicker() {')
-    code.append('    // Implementation for image picker')
-    code.append('    return Column(')
-    code.append('      crossAxisAlignment: CrossAxisAlignment.start,')
-    code.append('      children: [')
-    code.append('        Text(label),')
-    code.append('        // Add image picker implementation here')
-    code.append('      ],')
-    code.append('    );')
-    code.append('  }')
-    code.append('}')
-    code.append('')
-    code.append('class AppConstant {')
-    code.append('  static const int FieldType_dropdown = 1;')
-    code.append('  static const int FieldType_multiple_choice = 2;')
-    code.append('  static const int FieldType_radio = 3;')
-    code.append('  static const int FieldType_EditText = 4;')
-    code.append('  static const int FieldType_Image = 5;')
-    code.append('  static const String SEPERATOR = "_";')
-    code.append('}')
-    
-    return '\n'.join(code)
-
-def _get_field_type(series):
-    """Determine the Dart field type based on the data."""
-    if series.dtype == 'int64':
-        return 'int'
-    elif series.dtype == 'float64':
-        return 'double'
-    elif series.nunique() <= 10:  # Potential enum/dropdown
-        return 'String'  # For simplicity, use String for now
-    else:
-        return 'String' 
+def sanitize_key(name):
+    """Sanitize keys to ensure they are valid Dart identifiers."""
+    return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower() 

@@ -15,17 +15,6 @@ def sanitize_key(name):
     """Sanitize keys to ensure they are valid Dart identifiers."""
     return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower()
 
-def write_dart_file(file_path, content, output_folder=None):
-    """Write Dart code to a file."""
-    if output_folder is None:
-        output_folder = settings.DART_SETTINGS['output_folder']
-    
-    os.makedirs(output_folder, exist_ok=True)
-    file_path = os.path.join(output_folder, file_path)
-    with open(file_path, 'w', encoding='utf-8') as file:
-        file.write(content)
-    return file_path
-
 def generate_dart_code(df, class_name, preview=False, metadata=None):
     """Generate Dart code from DataFrame."""
     try:
@@ -56,59 +45,56 @@ def generate_dart_code(df, class_name, preview=False, metadata=None):
         # Generate the Dart class code
         code = [f"class {class_name} {{"]
         
-        # Add primary ID field first
-        code.append(f"  String {class_name.lower()}Id;")
-        code.append("")  # Add a blank line for readability
+        # Add nullable fields
+        class_name_lower = class_name.lower()
+        code.append(f"  String? {class_name_lower}Id;")
         
-        # Add other class properties
+        # Add other fields with nullable types from database values
         for db_value in database_values:
             var_name = db_value.lower().replace(' ', '_').replace('-', '_')
-            code.append(f"  String {var_name};")
+            code.append(f"  String? {var_name};")
         
-        # Add constructor with primary ID
-        code.append(f"\n  {class_name}({{")
-        code.append(f"    required this.{class_name.lower()}Id,")  # Primary ID first
+        code.append("")
+        
+        # Add fromJson constructor
+        code.append(f"  {class_name}.fromJson(Map<String, dynamic> json) {{")
+        code.append(f"    {class_name_lower}Id = json['{class_name_lower}Id'];")
         for db_value in database_values:
             var_name = db_value.lower().replace(' ', '_').replace('-', '_')
-            code.append(f"    required this.{var_name},")
-        code.append("  });")
+            code.append(f"    {var_name} = json['{var_name}'];")
+        code.append("  }}")
         
-        # Add fromJson factory with primary ID
-        code.append(f"\n  factory {class_name}.fromJson(Map<String, dynamic> json) {{")
-        code.append(f"    return {class_name}(")
-        code.append(f"      {class_name.lower()}Id: json['{class_name.lower()}Id'] ?? '',")  # Primary ID first
+        code.append("")
+        
+        # Add getDataTypeMap method
+        code.append("  Map<String, String> getDataTypeMap() {")
+        code.append("    return {")
+        code.append(f"      '{class_name_lower}Id': 'String',")
         for db_value in database_values:
             var_name = db_value.lower().replace(' ', '_').replace('-', '_')
-            code.append(f"      {var_name}: json['{db_value}'] ?? '',")
-        code.append("    );")
+            code.append(f"      '{var_name}': 'String',")
+        code.append("    };")
         code.append("  }")
         
-        # Add toJson method with primary ID
-        code.append("\n  Map<String, dynamic> toJson() {")
-        code.append("    return {")
-        code.append(f"      '{class_name.lower()}Id': {class_name.lower()}Id,")  # Primary ID first
+        code.append("")
+        
+        # Add toString method
+        code.append("  @override")
+        code.append("  String toString() {")
+        field_strings = []
+        field_strings.append(f"{class_name_lower}Id: ${class_name_lower}Id")
         for db_value in database_values:
             var_name = db_value.lower().replace(' ', '_').replace('-', '_')
-            code.append(f"      '{db_value}': {var_name},")
-        code.append("    };")
+            field_strings.append(f"{var_name}: ${var_name}")
+        toString_content = ", ".join(field_strings)
+        code.append(f"    return '{class_name}(' +")
+        code.append(f"        '{toString_content}' +")
+        code.append("        ');")
         code.append("  }")
         
         code.append("}")
         
-        generated_code = '\n'.join(code)
-        
-        if preview:
-            return generated_code
-            
-        # Save to file if not in preview mode
-        output_dir = settings.DART_SETTINGS['output_folder']
-        os.makedirs(output_dir, exist_ok=True)
-        
-        output_file = os.path.join(output_dir, f"{class_name.lower()}.dart")
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(generated_code)
-            
-        return output_file
+        return '\n'.join(code)
         
     except Exception as e:
         print(f"Error generating Dart code: {e}")
@@ -127,8 +113,13 @@ def generate_full_model(df, class_name, preview=False, output_folder=None, quest
     # Filter dropdown and multiple-choice rows
     filtered_data = df[df['data_type'].str.strip().str.lower().isin(['dropdown', 'multiple choice', 'radio'])].copy()
 
+    # Find all language columns dynamically
+    language_columns = [col for col in df.columns if col.startswith('field_names_in_')]
+    if not language_columns:
+        language_columns = ['field_names_in_english']  # Default to English if no language columns found
+
     # Ensure all relevant columns are strings and clean
-    for col in ['field_names_in_english', 'field_names_in_tamil', 'field_names_in_sinhala']:
+    for col in language_columns:
         filtered_data[col] = filtered_data[col].fillna('').astype(str).apply(lambda x: x.strip())
 
     # Flatten field names in English
@@ -142,27 +133,32 @@ def generate_full_model(df, class_name, preview=False, output_folder=None, quest
     # Group data by database
     grouped_data = flattened_data.groupby('database')['field_names_in_english'].apply(list).to_dict()
 
-    # Generate localization data
-    localization_data = {lang: {} for lang in ['English', 'Tamil', 'Sinhala']}
+    # Generate localization data dynamically based on available languages
+    localization_data = {}
+    for col in language_columns:
+        lang = col.replace('field_names_in_', '').capitalize()
+        localization_data[lang] = {}
+    
     today_date = datetime.now().strftime('%Y-%m-%d')
 
     for _, row in flattened_data.iterrows():
         english_name = str(row['field_names_in_english']).strip()
-        tamil_name = str(row['field_names_in_tamil']).strip()
-        sinhala_name = str(row['field_names_in_sinhala']).strip()
         database_name = sanitize_key(str(row['database']).strip())  # Sanitize the database name
         sanitized_key = f"{sanitize_key(english_name)}_{database_name}"  # Append database to the key
 
-        localization_data['English'][sanitized_key] = english_name
-        localization_data['Tamil'][sanitized_key] = tamil_name
-        localization_data['Sinhala'][sanitized_key] = sinhala_name
+        # Add translations for each available language
+        for col in language_columns:
+            lang = col.replace('field_names_in_', '').capitalize()
+            value = str(row[col]).strip() if col in row else english_name
+            localization_data[lang][sanitized_key] = value
 
     # Generate localization files field type
     generated_files = []
-    for lang, lang_file in {'English': 'en_field.dart', 'Tamil': 'ta_field.dart', 'Sinhala': 'si_field.dart'}.items():
+    for lang, translations in localization_data.items():
+        lang_file = f"{lang.lower()}_field.dart"
         content = f"/// {class_name} localization file - {today_date}\n\n"
         content += "class Localization {\n"
-        for key, value in localization_data[lang].items():
+        for key, value in translations.items():
             content += f"  String get {key}_ufind_v2 => '{value}';\n"
         content += "}\n"
         file_path = write_dart_file(lang_file, content, output_folder)
