@@ -285,6 +285,9 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(
+          title: Text("{{ file.class_name }}"),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
@@ -342,7 +345,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
         return GestureDetector(
             onDoubleTap: () {
             // Show a toast message
-            Operations.makeSnackBar(backgroundColor: Colors.white, context, " number: ${number.toString()}");
+          //  Operations.makeSnackBar(backgroundColor: Colors.white, context, " number: ${number.toString()}");
             },
             child: widget,
         );
@@ -660,7 +663,7 @@ class HorizontalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap, // Fixed: Changed from '() => onTap' to just 'onTap'
+      onTap: onTap, 
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
