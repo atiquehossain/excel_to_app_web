@@ -126,14 +126,11 @@ if DEBUG:
 
 # Excel Converter Settings
 EXCEL_SETTINGS = {
-    'default_sheet': 'Sheet1',
-    'skip_hidden_rows': True,
     'supported_extensions': ['.xlsx', '.xls', '.csv']
 }
 
 DART_SETTINGS = {
     'null_safety': True,
-    'template_folder': 'templates',
     'indent_size': 2,
     'max_line_length': 80
 }

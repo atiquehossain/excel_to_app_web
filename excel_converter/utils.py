@@ -1,36 +1,91 @@
 """
-Utility functions for excel_converter app.
+Utility functions for processing Excel files and preparing data for Dart code generation.
+This module handles all Excel-related operations like reading files, cleaning data,
+and preparing it for code generation.
 """
 import os
 import re
 import pandas as pd
 from django.conf import settings
 from openpyxl import load_workbook
-from datetime import datetime
 
 def get_excel_path(filename):
-    """Get the full path for an Excel file."""
+    """
+    Constructs the full path where an uploaded Excel file is stored.
+    
+    Args:
+        filename (str): Name of the Excel file (e.g., 'data.xlsx')
+    
+    Returns:
+        str: Full path to the Excel file (e.g., '/media/uploads/data.xlsx')
+    
+    Example:
+        >>> get_excel_path('mydata.xlsx')
+        '/media/uploads/mydata.xlsx'
+    """
     return os.path.join(settings.MEDIA_ROOT, 'uploads', filename)
 
+def normalize_sheet_name(name):
+    """
+    Cleans up Excel sheet names by removing spaces and special characters.
+    This helps match sheet names regardless of formatting differences.
+    
+    Args:
+        name (str): Original sheet name (e.g., 'My Sheet!')
+    
+    Returns:
+        str: Cleaned sheet name (e.g., 'MySheet')
+    
+    Example:
+        >>> normalize_sheet_name('My Data Sheet!')
+        'MyDataSheet'
+    """
+    return re.sub(r'[^a-zA-Z0-9]', '', str(name).strip())
+
 def get_excel_sheets(file_path):
-    """Get all sheet names from an Excel file."""
+    """
+    Gets a list of all sheet names from an Excel file.
+    
+    Args:
+        file_path (str): Path to the Excel file
+    
+    Returns:
+        list: List of sheet names found in the Excel file
+    
+    Example:
+        >>> get_excel_sheets('data.xlsx')
+        ['Sheet1', 'Data', 'Summary']
+    """
     try:
-        # Use pandas to get sheet names
-        print(f"Attempting to get sheet names from: {file_path}")
         excel_file = pd.ExcelFile(file_path)
         sheet_names = excel_file.sheet_names
-        print(f"Found sheets: {sheet_names}")
         return sheet_names
     except Exception as e:
         print(f"Error getting sheet names: {e}")
         return []
 
-def normalize_sheet_name(name):
-    """Normalize sheet name by removing spaces and special characters."""
-    return re.sub(r'[^a-zA-Z0-9]', '', str(name).strip())
-
 def process_excel_file(file_path, sheet_name=None):
-    """Process the Excel file and return a DataFrame."""
+    """
+    Main function that reads and processes an Excel file.
+    It handles sheet selection, data cleaning, and format conversion.
+    
+    Args:
+        file_path (str): Path to the Excel file
+        sheet_name (str, optional): Name of the sheet to process. If None, uses first sheet.
+    
+    Returns:
+        pandas.DataFrame: Processed data ready for code generation
+    
+    Example:
+        >>> df = process_excel_file('data.xlsx', 'Sheet1')
+        >>> df.columns
+        ['event_name', 'meeting_with', 'total_number']
+    
+    Notes:
+        - Converts all column names to lowercase and replaces spaces with underscores
+        - Handles sheet name matching regardless of case or special characters
+        - Converts all data to string format for consistency
+    """
     # Ensure we're using the correct path
     if not os.path.isabs(file_path):
         file_path = get_excel_path(os.path.basename(file_path))
@@ -60,17 +115,8 @@ def process_excel_file(file_path, sheet_name=None):
         if not matching_sheet:
             raise ValueError(f"Sheet '{sheet_name}' not found in the Excel file. Available sheets: {', '.join(available_sheets)}")
 
-        # Load workbook and get hidden rows
-        workbook = load_workbook(file_path, data_only=True)
-        sheet = workbook[matching_sheet]
-        hidden_rows = [row for row in sheet.row_dimensions if sheet.row_dimensions[row].hidden]
-        
-        # Read Excel file
+        # Read Excel file with the matched sheet name
         df = pd.read_excel(file_path, sheet_name=matching_sheet)
-        
-        # Skip hidden rows if configured
-        if settings.EXCEL_SETTINGS['skip_hidden_rows']:
-            df = df.drop(index=[row - 1 for row in hidden_rows if row <= len(df)])
         
         # Clean column names
         df.columns = (
@@ -80,7 +126,7 @@ def process_excel_file(file_path, sheet_name=None):
                     .str.replace(r'[^\w]', '', regex=True)
         )
         
-        # Convert all columns to string type to avoid .str accessor errors
+        # Convert all columns to string type
         for col in df.columns:
             df[col] = df[col].fillna('').astype(str)
         
@@ -89,15 +135,18 @@ def process_excel_file(file_path, sheet_name=None):
     except Exception as e:
         raise ValueError(f"Error processing Excel file: {str(e)}")
 
-def clean_column_name(name):
-    """Clean column names by replacing non-alphanumeric characters with underscores."""
-    return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower()
-
-def count_dropdown_and_multiple_choice_columns(df, threshold=10):
-    """Count the number of dropdown and multiple-choice columns in a DataFrame."""
-    dropdown_columns = [col for col in df.columns if df[col].nunique() <= threshold]
-    return len(dropdown_columns), dropdown_columns
-
 def sanitize_key(name):
-    """Sanitize keys to ensure they are valid Dart identifiers."""
+    """
+    Makes strings safe to use as Dart variable names by removing invalid characters.
+    
+    Args:
+        name (str): Original string (e.g., 'User Name!')
+    
+    Returns:
+        str: Valid Dart identifier (e.g., 'user_name')
+    
+    Example:
+        >>> sanitize_key('User Name!')
+        'user_name'
+    """
     return re.sub(r'[^0-9a-zA-Z]+', '_', str(name).strip()).lower() 
