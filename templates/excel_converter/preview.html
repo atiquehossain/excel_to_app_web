@@ -548,62 +548,83 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                         <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
                             Copy
                         </button>
-                        <pre class="text-white"><code>import 'package:flutter/material.dart';
-
-class {{ file.class_name }}ListPage extends StatelessWidget {
-  final List<{{ file.class_name }}> {{ file.class_name|lower }}List;
-
-  const {{ file.class_name }}ListPage({
-    Key? key,
-    required this.{{ file.class_name|lower }}List,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('{{ file.class_name }} List'),
-      ),
-      body: ListView.builder(
-        itemCount: {{ file.class_name|lower }}List.length,
-        itemBuilder: (context, index) {
-          {{ file.class_name }} {{ file.class_name|lower }} = {{ file.class_name|lower }}List[index];
-
-          return Card(
-            margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-            elevation: 5,
-            child: ListTile(
-              title: Text({{ file.class_name|lower }}.{% if file.fields %}{{ file.fields.0.database }}{% else %}id{% endif %}),
-              subtitle: Text(
-                {% if file.fields|length > 1 %}'{{ file.fields.1.field }}: \${{ '{' }}{{ file.class_name|lower }}.{{ file.fields.1.database }}{{ '}' }}\n{{ file.fields.2.field }}: \${{ '{' }}{{ file.class_name|lower }}.{{ file.fields.2.database }}{{ '}' }}'{% else %}'No additional fields'{% endif %}
-              ),
-              trailing: Icon(Icons.arrow_forward),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => {{ file.class_name }}UI(),
-                  ),
-                );
-              },
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => {{ file.class_name }}UI(),
-            ),
-          );
-        },
-        child: Icon(Icons.add),
-      ),
-    );
+<pre class="text-white"><code>
+  import 'package:flutter/material.dart';
+  import 'db_helper.dart';
+  import '{{file.class_name|lower}}_entry.dart';
+  
+  class {{file.class_name}}ListPage extends StatefulWidget {
+    @override
+    _{{file.class_name}}ListPageState createState() => _{{file.class_name}}ListPageState();
   }
-}</code></pre>
+  
+  class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPage> {
+    List<{{file.class_name}}> _{{file.class_name|lower}}List = [];
+  
+    @override
+    void initState() {
+      super.initState();
+      _load{{file.class_name}}s();
+    }
+  
+    Future<void> _load{{file.class_name}}s() async {
+      final items = await DatabaseHelper.get{{file.class_name}}s();
+      setState(() {
+        _{{file.class_name|lower}}List = items;
+      });
+    }
+  
+    Future<void> _delete{{file.class_name}}(int id) async {
+      await DatabaseHelper.delete{{file.class_name}}(id);
+      _load{{file.class_name}}s();
+    }
+  
+ 
+  
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(title: Text('${{file.class_name}} List')),
+        body: ListView.builder(
+          itemCount: _{{file.class_name|lower}}List.length,
+          itemBuilder: (context, index) {
+            final item = _{{file.class_name|lower}}List[index];
+            return ListTile(
+              title: Text(item.id.toString()), 
+              subtitle: Text(item.toString()),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _delete{{file.class_name}}(item.id!),
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => {{file.class_name}}EntryPage(primaryKeyId: model.{{file.class_name|lower}}id,
+                  
+                  model: model),
+                ),
+              ),
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => {{file.class_name}}EntryPage(),
+        ),
+      )
+          },
+          child: const Icon(Icons.add),
+        ),
+      );
+    }
+  }
+  
+
+                          
+</code></pre>
                     </div>
                 </div>
                 {% endfor %}
