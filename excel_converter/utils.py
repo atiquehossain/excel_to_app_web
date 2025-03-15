@@ -86,10 +86,6 @@ def process_excel_file(file_path, sheet_name=None):
         - Handles sheet name matching regardless of case or special characters
         - Converts all data to string format for consistency
     """
-    # Ensure we're using the correct path
-    if not os.path.isabs(file_path):
-        file_path = get_excel_path(os.path.basename(file_path))
-    
     try:
         # Get sheet names if not provided
         if not sheet_name:

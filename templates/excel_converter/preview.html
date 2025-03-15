@@ -28,7 +28,7 @@
             <!-- App Info Card -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 transform hover:scale-[1.02] transition-all duration-300">
                 <h2 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Generated App Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
                         <p class="font-medium text-gray-600 dark:text-gray-300 mb-2">App Name</p>
                         <p class="text-lg text-gray-800 dark:text-gray-100">{{ app_name }}</p>
@@ -36,6 +36,14 @@
                     <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
                         <p class="font-medium text-gray-600 dark:text-gray-300 mb-2">Ideal Sheet</p>
                         <p class="text-lg text-gray-800 dark:text-gray-100">{{ ideal_sheet }}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl">
+                        <p class="font-medium text-gray-600 dark:text-gray-300 mb-2">Selected Sheets</p>
+                        <div class="text-lg text-gray-800 dark:text-gray-100">
+                            {% for file in generated_files %}
+                            <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded px-2 py-1 text-sm mr-2 mb-2">{{ file.sheet }}</span>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,9 +133,14 @@
                         <div id="model-{{ file.class_name }}" 
                              class="model-content {% if not forloop.first %}hidden{% endif %}">
                             <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                                    Copy
-                                </button>
+                                <div class="absolute top-2 right-2 flex gap-2">
+                                    <button onclick="downloadCode(this, '{{ file.class_name }}.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                        Download
+                                    </button>
+                                    <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                        Copy
+                                    </button>
+                                </div>
                                 <pre class="text-white"><code>{{ file.generated_code|default:"// Code will be generated here" }}</code></pre>
                             </div>
                         </div>
@@ -139,9 +152,14 @@
                             <h2 class="text-xl font-semibold">Language Keys</h2>
                         </div>
                             <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                                    Copy
-                                </button>
+                                <div class="absolute top-2 right-2 flex gap-2">
+                                    <button onclick="downloadCode(this, 'language_keys.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                        Download
+                                    </button>
+                                    <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                        Copy
+                                    </button>
+                                </div>
                                 <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
@@ -167,9 +185,14 @@
                             <h2 class="text-xl font-semibold">Key Value Pairs</h2>
                         </div>
                             <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                                    Copy
-                                </button>
+                                <div class="absolute top-2 right-2 flex gap-2">
+                                    <button onclick="downloadCode(this, 'key_values.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                        Download
+                                    </button>
+                                    <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                        Copy
+                                    </button>
+                                </div>
                                 <pre class="text-white"><code>abstract class Languages {
 {% for file in generated_files %}
   // {{ file.sheet }} Questions
@@ -196,9 +219,14 @@
                             <h2 class="text-xl font-semibold">Setup Data</h2>
                         </div>
                             <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                                    Copy
-                                </button>
+                                <div class="absolute top-2 right-2 flex gap-2">
+                                    <button onclick="downloadCode(this, 'setup_data.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                        Download
+                                    </button>
+                                    <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                        Copy
+                                    </button>
+                                </div>
                                 <pre class="text-white"><code>class SetupConstant {
 {% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
   static const String {{ question.database }} = "{{ question.database }}";{% endif %}{% endfor %}{% endif %}{% endfor %}
@@ -254,9 +282,14 @@ class SetupData {
                         <div id="ui-{{ file.class_name }}" 
                              class="ui-content {% if not forloop.first %}hidden{% endif %}">
                             <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                                <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                                    Copy
-                                </button>
+                                <div class="absolute top-2 right-2 flex gap-2">
+                                    <button onclick="downloadCode(this, '{{ file.class_name|lower }}_ui.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                        Download
+                                    </button>
+                                    <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                        Copy
+                                    </button>
+                                </div>
                                 <pre class="text-white"><code>import 'package:flutter/material.dart';
 class {{ file.class_name }}UI extends StatefulWidget {
   @override
@@ -545,9 +578,14 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                 <div id="list-{{ file.class_name }}" 
                      class="list-content {% if not forloop.first %}hidden{% endif %}">
                     <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                        <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                            Copy
-                        </button>
+                        <div class="absolute top-2 right-2 flex gap-2">
+                            <button onclick="downloadCode(this, '{{ file.class_name|lower }}_list.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                                Download
+                            </button>
+                            <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                                Copy
+                            </button>
+                        </div>
 <pre class="text-white"><code>
   import 'package:flutter/material.dart';
   import 'db_helper.dart';
@@ -636,9 +674,14 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                 </div>
                 
                 <div class="bg-gray-800 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto relative">
-                    <button onclick="copyCode(this)" class="absolute top-2 right-2 px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
-                        Copy
-                    </button>
+                    <div class="absolute top-2 right-2 flex gap-2">
+                        <button onclick="downloadCode(this, 'home_page.dart')" class="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-500 text-white rounded">
+                            Download
+                        </button>
+                        <button onclick="copyCode(this)" class="px-2 py-1 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded">
+                            Copy
+                        </button>
+                    </div>
                     <pre class="text-white"><code>import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -840,6 +883,28 @@ function copyCode(button) {
             button.classList.remove('bg-red-500');
         }, 2000);
     });
+}
+
+function downloadCode(button, filename) {
+    // Get the code content from the pre tag
+    const codeElement = button.closest('.relative').querySelector('pre code');
+    const codeContent = codeElement.textContent;
+    
+    // Create a blob with the code content
+    const blob = new Blob([codeContent], { type: 'text/plain' });
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    
+    // Append link to body, click it, and remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL object
+    window.URL.revokeObjectURL(link.href);
 }
 
 // Check for saved theme preference, otherwise use system preference

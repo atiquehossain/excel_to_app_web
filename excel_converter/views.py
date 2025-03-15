@@ -23,6 +23,28 @@ from django.urls import reverse
 from django.contrib import messages
 import traceback
 
+def handle_uploaded_file(file):
+    """
+    Handle file upload, replacing existing file if it exists.
+    Returns the file path relative to MEDIA_ROOT.
+    """
+    file_path = os.path.join('uploads', file.name)
+    full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+    
+    # Create uploads directory if it doesn't exist
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    
+    # Remove existing file if it exists
+    if os.path.exists(full_path):
+        os.remove(full_path)
+    
+    # Save the new file
+    with open(full_path, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+    
+    return file_path
+
 def index(request):
     """Render the main page."""
     form = ExcelUploadForm()
@@ -68,9 +90,9 @@ def get_sheets(request):
         # Get the uploaded file
         excel_file = request.FILES['file']
         
-        # Save the file temporarily
-        path = default_storage.save(f'uploads/{excel_file.name}', ContentFile(excel_file.read()))
-        full_path = os.path.join(settings.MEDIA_ROOT, path)
+        # Handle file upload - this will replace existing file if it exists
+        file_path = handle_uploaded_file(excel_file)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
         
         try:
             # Get all sheets from the Excel file
@@ -78,6 +100,9 @@ def get_sheets(request):
             
             if not sheets:
                 return JsonResponse({'error': 'No sheets found in the Excel file'}, status=400)
+            
+            # Store the filename in session for later use
+            request.session['filename'] = excel_file.name
             
             response_data = {
                 'success': True,
@@ -88,9 +113,6 @@ def get_sheets(request):
             
         except Exception as e:
             return JsonResponse({'error': f'Error processing Excel file: {e}'}, status=500)
-        finally:
-            # We don't delete the file here as we'll need it for processing
-            pass
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -105,9 +127,14 @@ def upload_file(request):
     
     try:
         # Get form data
+        excel_file = request.FILES['file']
         class_name = form.cleaned_data['class_name']
         sheets = request.POST.getlist('sheets', [])
         ideal_sheet = request.POST.get('ideal_sheet', '')
+        
+        # Handle file upload - this will replace existing file if it exists
+        file_path = handle_uploaded_file(excel_file)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
         
         # Get column selections
         database_column = request.POST.get('database_column', '')
@@ -150,24 +177,12 @@ def upload_file(request):
         if missing_columns:
             return JsonResponse({'error': f'Missing required columns: {", ".join(missing_columns)}'}, status=400)
         
-        # Check if we're using a previously uploaded file
-        filename = request.POST.get('filename', '')
-        if filename:
-            path = f'uploads/{filename}'
-            if not default_storage.exists(path):
-                return JsonResponse({'error': 'File not found'}, status=400)
-        else:
-            # Get the uploaded file
-            excel_file = request.FILES['file']
-            # Save the file
-            path = default_storage.save(f'uploads/{excel_file.name}', ContentFile(excel_file.read()))
-        
         try:
             # Process the Excel file for each selected sheet
             generated_files = []
             
             # Process the ideal sheet first
-            ideal_df = process_excel_file(path, ideal_sheet)
+            ideal_df = process_excel_file(full_path, ideal_sheet)
             
             # Add column information to metadata
             metadata = {
@@ -188,7 +203,7 @@ def upload_file(request):
             # Process other selected sheets
             for sheet in sheets:
                 if sheet != ideal_sheet:  # Skip the ideal sheet as it's already processed
-                    df = process_excel_file(path, sheet)
+                    df = process_excel_file(full_path, sheet)
                     sheet_class_name = f"{class_name}_{sheet.replace(' ', '_')}"
                     output_file = generate_dart_code(df, sheet_class_name, preview=False, metadata=metadata)
                     generated_files.append(output_file)
@@ -204,11 +219,9 @@ def upload_file(request):
                 'files': [os.path.basename(f) for f in generated_files]
             })
             
-        finally:
-            # Clean up the uploaded file
-            if default_storage.exists(path):
-                default_storage.delete(path)
-    
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+            
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -430,6 +443,13 @@ def validate_columns(request):
         if ideal_sheet not in sheets:
             return JsonResponse({'error': 'Ideal sheet must be one of the selected sheets'}, status=400)
         
+        # Use consistent file path handling
+        file_path = os.path.join('uploads', filename)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        if not os.path.exists(full_path):
+            return JsonResponse({'error': 'Excel file not found'}, status=400)
+        
         # Get column selections
         database_column = request.POST.get('database_column', '')
         question_column = request.POST.get('question_column', '')
@@ -481,7 +501,7 @@ def validate_columns(request):
         
         for sheet in sheets:
             # Process the Excel file for each sheet
-            df = process_excel_file(filename, sheet)
+            df = process_excel_file(full_path, sheet)
             
             # Remove completely empty rows
             df = df.dropna(how='all')
@@ -658,12 +678,14 @@ def get_columns(request):
         if not filename or not sheet_name:
             return JsonResponse({'error': 'Filename and sheet name are required'}, status=400)
         
-        path = f'uploads/{filename}'
-        if not default_storage.exists(path):
-            return JsonResponse({'error': 'File not found'}, status=400)
-        
         try:
-            full_path = os.path.join(settings.MEDIA_ROOT, path)
+            # Use consistent file path handling
+            file_path = os.path.join('uploads', filename)
+            full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+            
+            if not os.path.exists(full_path):
+                return JsonResponse({'error': 'File not found'}, status=400)
+            
             df = pd.read_excel(full_path, sheet_name=sheet_name)
             
             # Create a mapping of normalized names to original names
@@ -683,11 +705,9 @@ def get_columns(request):
             })
             
         except Exception as e:
-            
             return JsonResponse({'error': f'Error processing Excel file: {e}'}, status=500)
     
     except Exception as e:
-       
         return JsonResponse({'error': str(e)}, status=500)
 
 def app_builder(request):
@@ -715,10 +735,6 @@ def app_builder(request):
 def generate_database(request):
     """Generate database for each sheet with custom class names."""
     try:
-      
-        metadata = request.session.get('metadata', {})
-      
-
         # Get form data
         app_name = request.POST.get('appName')
         if not app_name:
@@ -736,8 +752,11 @@ def generate_database(request):
         if not filename:
             return JsonResponse({'error': 'Excel file not found'}, status=400)
         
-        path = f'uploads/{filename}'
-        if not default_storage.exists(path):
+        # Use consistent file path handling
+        file_path = os.path.join('uploads', filename)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        if not os.path.exists(full_path):
             return JsonResponse({'error': 'Excel file not found'}, status=400)
         
         # Get metadata from session
@@ -756,7 +775,7 @@ def generate_database(request):
         # Process each sheet
         generated_files = []
         for sheet in sheets:
-            df = process_excel_file(path, sheet)
+            df = process_excel_file(full_path, sheet)
             
         
             # Get questions and fields
