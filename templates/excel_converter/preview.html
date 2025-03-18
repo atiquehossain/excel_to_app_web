@@ -673,7 +673,7 @@ class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPag
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => {{file.class_name}}EntryPage()));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => {{file.class_name}}UI()));
         },
         child: Icon(Icons.add),
       ),
@@ -707,7 +707,7 @@ class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPag
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => {{file.class_name}}EntryPage(),
+        builder: (context) => {{file.class_name}}UI(),
       ),
     );
   }
