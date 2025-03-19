@@ -598,51 +598,54 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
   
   class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPage> {
     List<{{file.class_name}}> _{{file.class_name|lower}}List = [];
+
+    var dataSource;
   
     @override
     void initState() {
+      dataSource = DataSourceAAP(
+        modelList: <dynamic>[],
+        type: SourceType.local,
+        //select: "Select * from GeneralInfo where live_data_id == '' ORDER BY is_hh_head DESC",
+        select: "Select * from MemberInfo where live_data_uuid == '' ORDER BY is_hh_head ASC",
+        listPageType: AppConstant.BENEFICIARY_HOME,
+        houseHoldNumber: "187654321V");
       super.initState();
       _load{{file.class_name}}s();
     }
   
-    Future<void> _load{{file.class_name}}s() async {
-      final items = await DatabaseHelper.get{{file.class_name}}s();
-      setState(() {
-        _{{file.class_name|lower}}List = items;
-      });
-    }
-  
-    Future<void> _delete{{file.class_name}}(int id) async {
-      await DatabaseHelper.delete{{file.class_name}}(id);
-      _load{{file.class_name}}s();
-    }
-  
- 
+    
   
     @override
     Widget build(BuildContext context) {
       return Scaffold(
         appBar: AppBar(title: Text('${{file.class_name}} List')),
-        body: ListView.builder(
-          itemCount: _{{file.class_name|lower}}List.length,
-          itemBuilder: (context, index) {
-            final item = _{{file.class_name|lower}}List[index];
-            return ListTile(
-              title: Text(item.id.toString()), 
-              subtitle: Text(item.toString()),
-              trailing: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _delete{{file.class_name}}(item.id!),
+        body:  ListViewAAP(
+          selfScroll: false,
+          dataSource: dataSource,
+          orderField: 'AttendanceDate',
+          builder: (model, index) {
+            //var regDate = modelm.DataCollectionDate.toString().split("T").first; //model.DataCollectionDate.toString()
+
+            print("Model Data List:" + model.toString());
+
+            String filepath = Operations.getFileStoragePath(userId: model[AppConstant.BENEFICIARY_UUID], photoType: AppConstant.photo_member_img_url);
+
+            print("Image Path :" + filepath.toString());
+            print("Image URL :" + model["member_img_url"]);
+            return Card(
+              color: appColor.Background,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5.0),
               ),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => {{file.class_name}}EntryPage(primaryKeyId: model.{{file.class_name|lower}}id,
-                  
-                  model: model),
+              child: Column(
+                children: []));
                 ),
               ),
             );
+            onTap: (model, index) async {
+
+            }
           },
         ),
         floatingActionButton: FloatingActionButton(
