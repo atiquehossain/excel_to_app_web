@@ -587,84 +587,133 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                             </button>
                         </div>
 <pre class="text-white"><code>
-  import 'package:flutter/material.dart';
-  import 'db_helper.dart';
-  import '{{file.class_name|lower}}_entry.dart';
-  
-  class {{file.class_name}}ListPage extends StatefulWidget {
-    @override
-    _{{file.class_name}}ListPageState createState() => _{{file.class_name}}ListPageState();
+  import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import '../../constants/app_color.dart';
+import '../../constants/app_constants.dart';
+import '../../library/database/db_helper.dart';
+import '../../library/widgets/list/listview_aap.dart';
+import '../../library/widgets/page_uf.dart';
+import '{{file.class_name|lower}}UI.dart';
+
+class {{file.class_name}}ListPage extends StatefulWidget {
+  @override
+  _{{file.class_name}}ListPageState createState() => _{{file.class_name}}ListPageState();
+}
+
+class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPage> {
+  late DatabaseManager manager;
+  late DataSourceAAP dataSource;
+  final SearchController searchController = SearchController();
+  Timer? _debounce;
+  late AppColor appColor;
+
+  @override
+  void initState() {
+    super.initState();
+    manager = DatabaseManager();
+    dataSource = _buildDataSource('');
+    searchController.addListener(_onSearchChanged);
+    _load{{file.class_name}}s();
   }
-  
-  class _{{file.class_name}}ListPageState extends State<{{file.class_name}}ListPage> {
-    List<{{file.class_name}}> _{{file.class_name|lower}}List = [];
 
-    var dataSource;
-  
-    @override
-    void initState() {
-      dataSource = DataSourceAAP(
-        modelList: <dynamic>[],
-        type: SourceType.local,
-        //select: "Select * from GeneralInfo where live_data_id == '' ORDER BY is_hh_head DESC",
-        select: "Select * from MemberInfo where live_data_uuid == '' ORDER BY is_hh_head ASC",
-        listPageType: AppConstant.BENEFICIARY_HOME,
-        houseHoldNumber: "187654321V");
-      super.initState();
-      _load{{file.class_name}}s();
-    }
-  
-    
-  
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(title: Text('${{file.class_name}} List')),
-        body:  ListViewAAP(
-          selfScroll: false,
-          dataSource: dataSource,
-          orderField: 'AttendanceDate',
-          builder: (model, index) {
-            //var regDate = modelm.DataCollectionDate.toString().split("T").first; //model.DataCollectionDate.toString()
+  Future _load{{file.class_name}}s() async {}
 
-            print("Model Data List:" + model.toString());
-
-            String filepath = Operations.getFileStoragePath(userId: model[AppConstant.BENEFICIARY_UUID], photoType: AppConstant.photo_member_img_url);
-
-            print("Image Path :" + filepath.toString());
-            print("Image URL :" + model["member_img_url"]);
-            return Card(
-              color: appColor.Background,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              child: Column(
-                children: []));
-                ),
-              ),
-            );
-            onTap: (model, index) async {
-
-            }
-          },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => {{file.class_name}}EntryPage(),
-        ),
-      )
-          },
-          child: const Icon(Icons.add),
-        ),
-      );
-    }
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 100), () {
+      dataSource = _buildDataSource(searchController.text);
+      setState(() {});
+    });
   }
-  
 
-                          
+  DataSourceAAP _buildDataSource(String searchTerm) {
+    return DataSourceAAP(
+      modelList: <dynamic>[],
+      select: "SELECT * FROM {{file.class_name}}",
+      type: SourceType.local,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    appColor = AppColor();
+    return PageUF(
+      appBar: AppBar(
+        title: Text("{{file.class_name}} List"),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SearchBar(
+              shape: WidgetStateProperty.all<OutlinedBorder>(RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              )),
+              controller: searchController,
+              hintText: 'Search',
+              leading: Icon(
+                Icons.search,
+                color: appColor.H1_Title_Text,
+              ),
+              backgroundColor: WidgetStateProperty.all(AppColor.white),
+              surfaceTintColor: WidgetStateProperty.all(AppColor.blackColor),
+              textStyle: WidgetStatePropertyAll(TextStyle(color: Colors.black)),
+              padding: const WidgetStatePropertyAll<EdgeInsets>(
+                EdgeInsets.symmetric(horizontal: 16.0),
+              ),
+            ),
+          ),
+          Expanded(
+            child: _buildResultsList(),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => {{file.class_name}}EntryPage()));
+        },
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildResultsList() {
+    return ListViewAAP(
+      dataSource: dataSource,
+      selfScroll: true,
+      builder: (model, index) => _buildListItem(model),
+      onTap: (model, index) => _navigateToDetail(model),
+    );
+  }
+
+  Widget _buildListItem(Map<String, dynamic> model) {
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      color: appColor.Disabled_Background,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetail(Map<String, dynamic> model) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => {{file.class_name}}EntryPage(),
+      ),
+    );
+  }
+}
+
+                        
 </code></pre>
                     </div>
                 </div>
