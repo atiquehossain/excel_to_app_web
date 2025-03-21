@@ -336,7 +336,6 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   question: Languages.getText(context)!.{{ question.key }},
                   {% if question.field_type|lower == 'radio' or question.field_type|lower == 'radio button' %}
                   fieldType: AppConstant.FieldType_radio,
-                  
                   {% elif question.field_type|lower == 'dropdown' %}
                   fieldType: AppConstant.FieldType_dropdown,
                   {% elif question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
