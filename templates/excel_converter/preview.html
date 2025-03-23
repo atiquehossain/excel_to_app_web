@@ -334,13 +334,13 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                 condition: numbers.contains({{ question.question_no|default:forloop.counter }}),
                 widget: {{ file.class_name }}Widget(
                   question: Languages.getText(context)!.{{ question.key }},
-                  {% if question.field_type|lower == 'radio' %}
+                  {% if question.field_type|lower == 'radio' or question.field_type|lower == 'radio button' %}
                   fieldType: AppConstant.FieldType_radio,
                   {% elif question.field_type|lower == 'dropdown' %}
                   fieldType: AppConstant.FieldType_dropdown,
                   {% elif question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
                   fieldType: AppConstant.FieldType_multiple_choice,
-                  {% elif question.field_type|lower == 'number' %}
+                  {% elif question.field_type|lower == 'number' or question.field_type|lower == 'numeric' %}
                   fieldType: AppConstant.FieldType_NumberText,
                   keyboardType: TextInputType.number,
                   {% elif question.field_type|lower == 'date' or question.field_type|lower == 'datetime' %}
