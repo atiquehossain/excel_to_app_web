@@ -229,7 +229,7 @@
                                 </div>
                                 <pre class="text-white"><code>class SetupConstant {
 {% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
-  static const String {{ question.database }} = "{{ question.database }}";{% endif %}{% endfor %}{% endif %}{% endfor %}
+  static const String {{ question.database }}_{{ file.class_name }}_SetupConstant = "{{ question.database }}_{{ file.class_name }}_SetupConstant";{% endif %}{% endfor %}{% endif %}{% endfor %}
 }
 
 class SetupData {
@@ -242,7 +242,7 @@ class SetupData {
     // Using if-else chain for model name checking
     if (false) { /* placeholder for first condition */ }
 {% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
-    else if (modelName == SetupConstant.{{ question.database }}) {
+    else if (modelName == SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant) {
       // Setup data for {{ question.database }}{% regroup file.fields|dictsort:"database_value" by database_value as fields_by_database %}{% for db_group in fields_by_database %}{% if db_group.grouper == question.database %}{% for field in db_group.list %}
       items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ forloop.counter }}"));{% endfor %}{% endif %}{% endfor %}
     }{% endif %}{% endfor %}{% endif %}{% endfor %}
@@ -353,7 +353,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   fieldType: AppConstant.FieldType_EditText,
                   {% endif %}
                   field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},  <!-- Added field property here -->
-                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}){% endif %},
+                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant){% endif %},
                   onChanged: (value) {
                       {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
                   },
@@ -591,11 +591,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../constants/app_color.dart';
-import '../../constants/app_constants.dart';
-import '../../library/database/db_helper.dart';
-import '../../library/widgets/list/listview_aap.dart';
-import '../../library/widgets/page_uf.dart';
+
 import '{{file.class_name|lower}}UI.dart';
 
 class {{file.class_name}}ListPage extends StatefulWidget {
