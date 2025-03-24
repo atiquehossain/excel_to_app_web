@@ -359,7 +359,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   fieldType: AppConstant.FieldType_EditText,
                   {% endif %}
                   field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},  <!-- Added field property here -->
-                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant){% endif %},
+                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' or question.field_type|lower == 'numeric' or question.field_type|lower == 'image' or question.field_type|lower == 'photo' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant){% endif %},
                   onChanged: (value) {
                       {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
                   },
@@ -500,6 +500,27 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   },
                 ),
               )
+              else if (fieldType == AppConstant.FieldType_EditText)
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: NewTextFieldAAP(
+                    labelText: "",
+                    initialValue: field,
+                    borderRadius: 10,
+                    // focusNode: focusNode, // Assign the FocusNode
+                    keyboardType: TextInputType.text,
+                    // Assign the KeyboardType
+                    isEnable: textFieldEditable ?? true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your value';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      onChanged(value);
+                    },
+                  ))
             else if (fieldType == AppConstant.FieldType_radio)
                 RadioGroupAAP(
                   radioGroupType: RadioGroupType.simple,
@@ -545,6 +566,17 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                         onChange: (filename, filePath, fileType, file, date) {
                           onChanged(filename, filePath, fileType, file, date);
                                               },
+                      )
+                      else if (fieldType == AppConstant.FieldType_date)
+                      DatePickerAAP(
+                        onDateSelected: (v) {
+                          print("object${v}");
+                          onChanged(v);
+                        },
+                        title: "",
+                        initialDate: DateTime.now(),
+                        lastDate: new DateTime.now(),
+                        appColor: appColor,
                       ),
           ],
         ),
