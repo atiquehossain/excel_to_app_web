@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.contrib import messages
 import traceback
 
+
 def handle_uploaded_file(file):
     """
     Handle file upload, replacing existing file if it exists.
