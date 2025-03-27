@@ -228,7 +228,7 @@
                                     </button>
                                 </div>
                                 <pre class="text-white"><code>class SetupConstant {
-{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'radio button'  or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
   static const String {{ question.database }}_{{ file.class_name }}_SetupConstant = "{{ question.database }}_{{ file.class_name }}_SetupConstant";{% endif %}{% endfor %}{% endif %}{% endfor %}
 }
 
@@ -241,7 +241,7 @@ class SetupData {
     
     // Using if-else chain for model name checking
     if (false) { /* placeholder for first condition */ }
-{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
+{% for file in generated_files %}{% if file.questions %}{% for question in file.questions %}{% if question.field_type|lower == 'radio' or question.field_type|lower == 'radio button' or question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %}
     else if (modelName == SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant) {
       // Setup data for {{ question.database }}{% regroup file.fields|dictsort:"database_value" by database_value as fields_by_database %}{% for db_group in fields_by_database %}{% if db_group.grouper == question.database %}{% for field in db_group.list %}
       items.add(SetupModel(Languages.getText(context)!.{{ field.key }}, "{{ forloop.counter }}"));{% endfor %}{% endif %}{% endfor %}
@@ -323,7 +323,7 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
+      child: PageUF(
         appBar: AppBar(
           title: Text("{{ file.class_name }}"),
         ),
@@ -359,7 +359,8 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
                   fieldType: AppConstant.FieldType_EditText,
                   {% endif %}
                   field: {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }},  <!-- Added field property here -->
-                  dataList: {% if question.field_type|lower == 'number' or question.field_type|lower == 'text' or question.field_type|lower == 'pdf' or question.field_type|lower == 'numeric' or question.field_type|lower == 'image' or question.field_type|lower == 'photo' %}null{% else %}SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant){% endif %},
+                  dataList: 
+                  {% if question.field_type|lower == 'radio' or question.field_type|lower == 'radio button' %}  SetupData.getCheklistItemsWithoutFuture(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant) {% elif question.field_type|lower == 'dropdown' or question.field_type|lower == 'multiple choice' or question.field_type|lower == 'multiple-choice' or question.field_type|lower == 'multiplechoice' %} SetupData.getDropDownItems(context, SetupConstant.{{ question.database }}_{{ file.class_name }}_SetupConstant) {% else %} null {% endif %},
                   onChanged: (value) {
                       {{ file.class_name|stringformat:"s"|lower }}.{{ question.database }} = value;
                   },
@@ -368,11 +369,38 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
               {% endfor %}
 {% endif %}
 
-          
+        
               ],
             ),
           ),
         ),
+        bottomBar:  EqualDividerAAP(
+          direction: Axis.horizontal,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AppBlueButton(
+                function: () {
+                  Navigator.pop(context);
+                },
+                buttonText: Languages.getText(context)!.cancel,
+                showArrow: false,
+                buttonRadius: 12,
+
+
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AppBlueButton(
+                function: () => {},
+                buttonText: Languages.getText(context)!.save_preview,
+                showArrow: false,
+                buttonRadius: 12,
+              ),
+            ),
+          ],
+       
       ),
     );
   }
@@ -384,7 +412,11 @@ class _{{ file.class_name }}UIState extends State<{{ file.class_name }}UI> {
         return GestureDetector(
             onDoubleTap: () {
             // Show a toast message
-          //  Operations.makeSnackBar(backgroundColor: Colors.white, context, " number: ${number.toString()}");
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Number: ${number.toString()}"),
+              ),
+            );
             },
             child: widget,
         );
