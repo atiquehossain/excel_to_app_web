@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <div class="container mx-auto px-4 py-16">
+        <!-- Header Section -->
+        <div class="text-center mb-16 animate-fade-in">
+            <h1 class="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent mb-6">
+                Excel to Dart Code Generator
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Transform your spreadsheets into production-ready Dart code
+            </p>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="flex flex-col md:flex-row justify-center gap-8 max-w-4xl mx-auto">
+            <!-- New App Card -->
+            <div class="group flex-1 transform transition-all duration-300 hover:-translate-y-2">
+                <div class="bg-white rounded-2xl shadow-xl p-8 h-full border border-gray-200 hover:border-blue-200 hover:shadow-2xl">
+                    <div class="flex flex-col h-full">
+                        <div class="mb-6 text-blue-600">
+                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                                <i class="fas fa-rocket text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-3">New Project</h3>
+                            <p class="text-gray-600 mb-6">
+                                Start from scratch with a complete Flutter application structure and boilerplate
+                            </p>
+                        </div>
+                        <a href="{% url 'excel_converter:app_builder' %}"
+                           class="mt-auto w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-300 group-hover:scale-[1.02]">
+                            Create App
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forms Card -->
+            <div class="group flex-1 transform transition-all duration-300 hover:-translate-y-2">
+                <div class="bg-white rounded-2xl shadow-xl p-8 h-full border border-gray-200 hover:border-red-200 hover:shadow-2xl">
+                    <div class="flex flex-col h-full">
+                        <div class="mb-6 text-red-600">
+                            <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center mb-6">
+                                <i class="fas fa-file-alt text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-3">Generate Forms</h3>
+                            <p class="text-gray-600 mb-6">
+                                Convert Excel templates into Dart forms with validation and UI components
+                            </p>
+                        </div>
+                        <a href="{% url 'excel_converter:fromGenerator' %}"
+                           class="mt-auto w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-red-600 hover:bg-red-700 transition-colors duration-300 group-hover:scale-[1.02]">
+                            Build Forms
+                            <i class="fas fa-magic ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out;
+        }
+
+        .group:hover .group-hover\:scale-\[1\.02\] {
+            transform: scale(1.02);
+        }
+    </style>
+
+{% endblock %}

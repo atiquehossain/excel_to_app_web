@@ -7,7 +7,10 @@ from . import views
 app_name = 'excel_converter'
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.homePage, name='index'),
+
+    path('fromGenerator/', views.fromGenerator, name='fromGenerator'),
+
     path('docs/', views.docs, name='docs'),
     path('get-sheets/', views.get_sheets, name='get_sheets'),
     path('get-columns/', views.get_columns, name='get_columns'),

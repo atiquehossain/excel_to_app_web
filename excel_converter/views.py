@@ -46,10 +46,16 @@ def handle_uploaded_file(file):
     
     return file_path
 
-def index(request):
+def fromGenerator(request):
     """Render the main page."""
     form = ExcelUploadForm()
     return render(request, 'excel_converter/index.html', {'form': form})
+
+def homePage(request):
+    """Render the main page."""
+
+    return render(request, 'homePage/home_page.html')
+
 
 def docs(request):
     """Render the documentation page."""
@@ -1049,4 +1055,6 @@ def sanitize_key(name):
     # Remove multiple underscores
     key = re.sub(r'_+', '_', key)
     # Remove leading/trailing underscores
-    return key.strip('_') 
+    return key.strip('_')
+
+
