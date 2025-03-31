@@ -56,6 +56,11 @@ def homePage(request):
 
     return render(request, 'homePage/home_page.html')
 
+def platform_page(request):
+    """Render the main page."""
+
+    return render(request, 'homePage/platform_page.html')
+
 
 def docs(request):
     """Render the documentation page."""

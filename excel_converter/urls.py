@@ -8,6 +8,7 @@ app_name = 'excel_converter'
 
 urlpatterns = [
     path('', views.homePage, name='index'),
+    path('platformPage/', views.platform_page, name='platformPage'),
 
     path('fromGenerator/', views.fromGenerator, name='fromGenerator'),
 
