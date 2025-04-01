@@ -17,7 +17,7 @@ schema_view = get_schema_view(
         default_version='v1',
         description="API documentation for Excel to Dart Code Generator",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@example.com"),
+        contact=openapi.Contact(email="nsuatique@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
