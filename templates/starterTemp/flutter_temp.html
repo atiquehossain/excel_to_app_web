@@ -1,0 +1,344 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter App Configuration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Flutter App Configuration</h1>
+
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+
+            <!-- Section 1: General App Setup -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">1. General App Setup</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">App Name</label>
+                        <input type="text" name="app_name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
+                        <input type="text" name="package_name" required placeholder="com.example.app" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Platforms</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {% for platform in ["Android", "iOS", "Web", "Desktop"] %}
+                            <label class="flex items-center space-x-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="platforms" value="{{ platform|lower }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">{{ platform }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: UI/UX Design -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">2. UI/UX Design</h2>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">UI Framework</label>
+                        <select name="ui_framework" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option>Material</option>
+                            <option>Cupertino</option>
+                            <option>Custom</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Navigation Type</label>
+                        <select name="navigation_type" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option>Bottom Navigation</option>
+                            <option>Drawer</option>
+                            <option>Tab Bar</option>
+                            <option>PageView</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Options</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="dark_mode" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">Dark Mode Support</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="onboarding" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">Onboarding Screen</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="custom_themes" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">Custom Themes</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: State Management -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">3. State Management</h2>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">State Management</label>
+                        <select name="state_management" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option>BLoC</option>
+                            <option>Provider</option>
+                            <option>GetX</option>
+                            <option>Riverpod</option>
+                            <option>None</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center pt-5">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="dependency_injection" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm font-medium">Use Dependency Injection</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Authentication -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">4. Authentication</h2>
+                <div class="space-y-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="enable_auth" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" id="authToggle">
+                        <span class="text-sm font-medium">Enable Authentication</span>
+                    </label>
+
+                    <div id="authSettings" class="space-y-4 pl-6 border-l-2 border-gray-100 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Authentication Methods</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                {% for method in ["Email/Password", "Google", "Facebook", "Apple", "Phone OTP"] %}
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" name="auth_methods" value="{{ method }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm">{{ method }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="biometric_auth" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm">Enable Biometric Authentication</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Backend & Data Management -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-blue-600">5. Backend & Data Management</h2>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Backend Service</label>
+                        <select name="backend_service" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option>Firebase</option>
+                            <option>Supabase</option>
+                            <option>Django</option>
+                            <option>Node.js</option>
+                            <option>None</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Database</label>
+                        <select name="database" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <option>SQLite</option>
+                            <option>Hive</option>
+                            <option>Firebase Firestore</option>
+                            <option>PostgreSQL</option>
+                            <option>None</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="realtime_data" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm">Real-time Data Updates</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="api_integration" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" id="apiToggle">
+                            <span class="text-sm">API Integration</span>
+                        </label>
+                        <div id="apiUrlField" class="hidden">
+                            <input type="url" name="api_base_url" placeholder="https://api.example.com" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm mt-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           <!-- Section 6: Features & Integrations -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <h2 class="text-xl font-semibold mb-4 text-blue-600">6. Features & Integrations</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="push_notifications" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Push Notifications</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="localization" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Multi-language Support</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="in_app_purchases" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">In-App Purchases</span>
+            </label>
+        </div>
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="google_maps" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Google Maps Integration</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="offline_mode" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Offline Mode with Caching</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- Section 7: App Security & Performance -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <h2 class="text-xl font-semibold mb-4 text-blue-600">7. Security & Performance</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="data_encryption" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Encrypt User Data</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="crash_reporting" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Crash Reporting & Analytics</span>
+            </label>
+        </div>
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="network_optimization" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Network Optimization</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- Section 8: Testing & Deployment -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <h2 class="text-xl font-semibold mb-4 text-blue-600">8. Testing & Deployment</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="testing_setup" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Unit & Widget Testing</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="ci_cd" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">CI/CD Configuration</span>
+            </label>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">App Stores</label>
+            <div class="space-y-2">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="stores" value="google" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm">Google Play Store</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="stores" value="apple" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm">Apple App Store</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 9: Project Structure -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <h2 class="text-xl font-semibold mb-4 text-blue-600">9. Project Structure</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="modular_arch" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Modular Architecture</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="clean_arch" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Clean Architecture</span>
+            </label>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Asset Organization</label>
+            <div class="space-y-2">
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="asset_org" value="single" class="rounded-full border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm">Single Folder</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="radio" name="asset_org" value="feature" class="rounded-full border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm">Feature-based</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 10: Branding -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+    <h2 class="text-xl font-semibold mb-4 text-blue-600">10. Branding</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-4">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="auto_icon" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Generate App Icon Automatically</span>
+            </label>
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" name="splash_screen" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-sm">Custom Splash Screen</span>
+            </label>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+            <div class="flex items-center space-x-3">
+                <input type="color" name="primary_color" value="#2196F3" class="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer">
+                <input type="text" name="color_hex" value="#2196F3" class="w-32 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 font-mono text-sm">
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- Submit Button -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium">
+                    Generate Flutter Project 🚀
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Toggle Authentication Settings
+        document.getElementById('authToggle').addEventListener('change', function() {
+            const authSettings = document.getElementById('authSettings');
+            authSettings.classList.toggle('hidden', !this.checked);
+        });
+
+        // Toggle API URL Field
+        document.getElementById('apiToggle').addEventListener('change', function() {
+            document.getElementById('apiUrlField').classList.toggle('hidden', !this.checked);
+        });
+
+        // Add visual feedback for checked items
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const parent = checkbox.closest('label');
+                parent.classList.toggle('bg-blue-50', checkbox.checked);
+                parent.classList.toggle('border-blue-200', checkbox.checked);
+            });
+        });
+    </script>
+</body>
+</html>
