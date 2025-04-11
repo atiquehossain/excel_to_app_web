@@ -356,12 +356,14 @@ def validate_row_data(df, required_columns):
         else:
             matched_columns[req_col] = None
     
-    # Find the English question column
+    # Find the English question column and field names column
     question_col = None
+    field_names_col = None
     for col in df.columns:
         if normalize_column_name(col) in ['questionsinenglish', 'questioninengish', 'englishquestion']:
             question_col = col
-            break
+        elif normalize_column_name(col) in ['fieldnamesinenglish', 'fieldnames', 'fieldnamesineng']:
+            field_names_col = col
     
     for index, row in df.iterrows():
         row_number = index + 2  # Adding 2 because Excel rows start at 1 and we have headers
@@ -386,13 +388,23 @@ def validate_row_data(df, required_columns):
         if question_col and (pd.isna(row[question_col]) or str(row[question_col]).strip() == '' or str(row[question_col]).lower() == 'nan'):
             continue
         
+        # Check if field_names_in_english column has data
+        field_names_has_data = False
+        if field_names_col and not pd.isna(row[field_names_col]) and str(row[field_names_col]).strip() and str(row[field_names_col]).lower() != 'nan':
+            field_names_has_data = True
+        
         # Check each required column including language columns
         for req_col in required_columns:
             actual_col = matched_columns.get(req_col)
             if actual_col and actual_col in df.columns:
                 value = str(row[actual_col]).strip()
-                # For language columns, only validate if the English question exists
-                if ('Questions in' in req_col or 'Field Names in' in req_col):
+                
+                # For language columns, only validate if field_names_in_english has data
+                if ('Field Names in' in req_col):
+                    if field_names_has_data and has_data and question_col and not pd.isna(row[question_col]):
+                        if pd.isna(value) or value == '' or value.lower() == 'nan':
+                            missing_fields.append(req_col)
+                elif ('Questions in' in req_col):
                     if has_data and question_col and not pd.isna(row[question_col]):
                         if pd.isna(value) or value == '' or value.lower() == 'nan':
                             missing_fields.append(req_col)
